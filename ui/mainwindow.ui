@@ -16,15 +16,107 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Hello World</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_mot">
+       <attribute name="title">
+        <string>Motor control</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="label_mot1">
+          <property name="text">
+           <string>Motor 1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot1">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot2">
+          <property name="text">
+           <string>Motor 2</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot3">
+          <property name="text">
+           <string>Motor 3</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot4">
+          <property name="text">
+           <string>Motor 4</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot5">
+          <property name="text">
+           <string>Motor 5</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot6">
+          <property name="text">
+           <string>Motor 6</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_tool">
+       <attribute name="title">
+        <string>Tool control</string>
+       </attribute>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
