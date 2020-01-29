@@ -1,7 +1,54 @@
-from PySide2.QtWidgets import QApplication, QMainWindow
+from PySide2.QtWidgets import QApplication, QMainWindow, QListView, QWidget, QPushButton, QVBoxLayout
 from PySide2.QtGui import QIcon
+from PySide2.QtCore import QRect
 from PySide2.QtUiTools import QUiLoader
 import sys
+
+class listOfSequencesHandler:
+    def __init__(self, ui):
+        self.mListOfSequences = ui.listOfSequences
+        self.mDeleteButton = ui.deleteButton
+        self.mCreateSequenceButton = ui.newSequence
+
+        self.mListOfSequences.setResizeMode(QListView.Adjust)
+        for i in range (1,6):
+            self.mListOfSequences.addItem(str(i))
+        # TODO: maybe move the connect elsewhere so there's no need for a private delete button
+        # connect the delete button to the removeSelectedItem function
+        self.mDeleteButton.clicked.connect(self.removeSelectedItem)
+        # connect the create button to the addWindow function which creates a new window
+        self.mCreateSequenceButton.clicked.connect(self.addWindow)
+
+    def addItem(self, item):
+        self.mListOfSequences.addItem(item)
+
+    def removeItem(self, row):
+        self.mListOfSequences.takeItem(row)
+
+    def removeSelectedItem(self):
+        listItems = self.mListOfSequences.selectedItems()
+        if not listItems: return
+        for item in listItems:
+            self.mListOfSequences.takeItem(self.mListOfSequences.row(item))
+
+    def addWindow(self):
+        self.w = createPopup()
+        # 2 first number QPoint and 2 last QSize
+        self.w.setGeometry(QRect(100, 100, 400, 200))
+        self.w.show()
+
+# Popup for creating a new sequence
+class createPopup(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+        self.cancelButton = QPushButton('Cancel', self)
+        self.cancelButton.clicked.connect(self.close)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.cancelButton)
+
+    # closes the window
+    def close(self):
+        self.destroy(True, True)
 
 
 class MainWindow(QMainWindow):
@@ -15,6 +62,8 @@ class MainWindow(QMainWindow):
         # self.setMaximumHeight(200)
         # self.setMaximumWidth(800)
         self.setIcon()
+
+        self.listItem = listOfSequencesHandler(self.ui)
 
         self.initializeSliderPositions()
 
