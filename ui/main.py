@@ -6,7 +6,7 @@
 # Date created: 22-01-2020
 
 
-from PySide2.QtWidgets import QApplication, QMainWindow, QListView, QWidget, QPushButton, QVBoxLayout
+from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QMenu, QListWidgetItem
 from PySide2.QtGui import QIcon
 from PySide2.QtCore import QRect
 from PySide2.QtUiTools import QUiLoader
@@ -16,17 +16,16 @@ import sys
 class ListOfSequencesHandler:
     def __init__(self, ui):
         self.mListOfSequences = ui.listOfSequences
-        self.mDeleteButton = ui.deleteButton
         self.mCreateSequenceButton = ui.newSequence
-
-        self.mListOfSequences.setResizeMode(QListView.Adjust)
-        for i in range(1, 6):
-            self.mListOfSequences.addItem(str(i))
+        listofnames = ["Vincent","Amelie","Jeremie", "Olivier", "Jacob"]
+        for i in listofnames:
+            sequence = Sequence(i)
+            self.mListOfSequences.addItem(sequence)
         # TODO: maybe move the connect elsewhere so there's no need for a private delete button
-        # connect the delete button to the removeSelectedItem function
-        self.mDeleteButton.clicked.connect(self.removeSelectedItem)
         # connect the create button to the addWindow function which creates a new window
         self.mCreateSequenceButton.clicked.connect(self.addWindow)
+        # connect the qwidgetlist to the custom right click menu
+        self.mListOfSequences.customContextMenuRequested.connect(self.showMenu)
 
     def addItem(self, item):
         self.mListOfSequences.addItem(item)
@@ -41,24 +40,63 @@ class ListOfSequencesHandler:
             self.mListOfSequences.takeItem(self.mListOfSequences.row(item))
 
     def addWindow(self):
-        self.w = CreatePopup()
+        self.w = CreateSequenceWindow()
         # 2 first number QPoint and 2 last QSize
         self.w.setGeometry(QRect(100, 100, 400, 200))
         self.w.show()
 
+    def showMenu(self, event):
+        menu = QMenu()
+        # TODO: implement the More Information functionality (show the characteristics and modify them)
+        menu.addAction("Modify Sequence")
+        menu.addAction("Delete Sequence", self.removeSelectedItem)
+        menu.exec_(self.mListOfSequences.mapToGlobal(event))
 
-# Popup for creating a new sequence
-class CreatePopup(QWidget):
+
+# Window for creating a new sequence
+class CreateSequenceWindow(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.cancelButton = QPushButton('Cancel', self)
+        # close is a function of QWidget
         self.cancelButton.clicked.connect(self.close)
         layout = QVBoxLayout(self)
         layout.addWidget(self.cancelButton)
 
-    # closes the window
-    def close(self):
-        self.destroy(True, True)
+# unfinished class
+class Sequence(QListWidgetItem):
+    def __init__(self, name="name",motors = {}, status = False):
+        QListWidgetItem.__init__(self)
+        self.setText(name)
+        self.mMotors = {}
+        self.mStatus = status
+
+    # def addMotor(self, motor):
+
+# class for a motor and its characteristics
+class Motor:
+    def __init__(self, name="name", pos = 0, status = False):
+        self.__name = name
+        self.__position = pos
+        self.__status = status
+
+    def setPosition(self, pos):
+        self.__position=pos
+
+    def getPosition(self):
+        return self.__position
+
+    def setName(self, name):
+        self.__name = name
+
+    def getName(self):
+        return self.__name
+
+    def setStatus(self, status):
+        self.__status = status
+
+    def getStatus(self):
+        return self.__status
 
 
 class MainWindow(QMainWindow):

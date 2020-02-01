@@ -18,7 +18,7 @@
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_mot">
        <attribute name="title">
@@ -138,7 +138,7 @@
        <widget class="QPushButton" name="newSequence">
         <property name="geometry">
          <rect>
-          <x>280</x>
+          <x>330</x>
           <y>10</y>
           <width>121</width>
           <height>23</height>
@@ -157,6 +157,9 @@
           <height>411</height>
          </rect>
         </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::CustomContextMenu</enum>
+        </property>
         <property name="dragDropMode">
          <enum>QAbstractItemView::DragOnly</enum>
         </property>
@@ -170,19 +173,6 @@
          <enum>QListView::Free</enum>
         </property>
        </widget>
-       <widget class="QPushButton" name="deleteButton">
-        <property name="geometry">
-         <rect>
-          <x>450</x>
-          <y>10</y>
-          <width>75</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Delete</string>
-        </property>
-       </widget>
       </widget>
      </widget>
     </item>
@@ -194,7 +184,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
