@@ -6,21 +6,25 @@
 # Date created: 22-01-2020
 
 
-from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QMenu, QListWidgetItem
+from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
+    QDialog, QDialogButtonBox, QLabel, QPushButton
 from PySide2.QtGui import QIcon
 from PySide2.QtCore import QRect
 from PySide2.QtUiTools import QUiLoader
 import sys
+import warnings
 
+# To remove the following warning: DeprecationWarning: an integer is required
+# (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
+# Implicit conversion to integers using __int__ is deprecated, and may be removed in a future version of Python.
+# self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
 class ListOfSequencesHandler:
-    def __init__(self, ui):
+    def __init__(self, ui, motors = {}):
+        self.__motors = motors
         self.mListOfSequences = ui.listOfSequences
         self.mCreateSequenceButton = ui.newSequence
-        listofnames = ["Vincent","Amelie","Jeremie", "Olivier", "Jacob"]
-        for i in listofnames:
-            sequence = Sequence(i)
-            self.mListOfSequences.addItem(sequence)
         # TODO: maybe move the connect elsewhere so there's no need for a private delete button
         # connect the create button to the addWindow function which creates a new window
         self.mCreateSequenceButton.clicked.connect(self.addWindow)
@@ -40,40 +44,130 @@ class ListOfSequencesHandler:
             self.mListOfSequences.takeItem(self.mListOfSequences.row(item))
 
     def addWindow(self):
-        self.w = CreateSequenceWindow()
+        self.w = CreateSequenceWindow(self.__motors, self)
         # 2 first number QPoint and 2 last QSize
-        self.w.setGeometry(QRect(100, 100, 400, 200))
+        self.w.setGeometry(QRect(150, 150, 600, 400))
         self.w.show()
 
     def showMenu(self, event):
         menu = QMenu()
-        # TODO: implement the More Information functionality (show the characteristics and modify them)
+        # TODO: implement the Modify Sequence functionality (show the characteristics and modify them)
         menu.addAction("Modify Sequence")
         menu.addAction("Delete Sequence", self.removeSelectedItem)
         menu.exec_(self.mListOfSequences.mapToGlobal(event))
 
 
 # Window for creating a new sequence
-class CreateSequenceWindow(QWidget):
-    def __init__(self):
-        QWidget.__init__(self)
-        self.cancelButton = QPushButton('Cancel', self)
-        # close is a function of QWidget
-        self.cancelButton.clicked.connect(self.close)
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.cancelButton)
+class CreateSequenceWindow(QDialog):
+    # TODO: get the motors
+    def __init__(self, motors = {}, listOfSequenceHandler = None):
+        QDialog.__init__(self)
+        appIcon = QIcon("icon.jpg")
+        self.setWindowIcon(appIcon)
+
+        self.__listOfSequenceHandler = listOfSequenceHandler
+        self.__motors = motors
+        self.__sequence = Sequence(motors)
+        self.__wantedPositions = {}
+
+        self.layout = QVBoxLayout(self)
+        self.mNameEntry = QLineEdit()
+        self.mNameLabel = QLabel("Sequence Name")
+        # TODO: mettre des sliders pour les moteurs
+        self.mMotor1Entry = QLineEdit()
+        self.mMotor1Label = QLabel("Motor1 Position")
+        self.mMotor2Entry = QLineEdit()
+        self.mMotor2Label = QLabel("Motor2 Position")
+        self.nextMoveButton = QPushButton("Next Move")
+        self.buttonBox = QDialogButtonBox()
+
+        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.accepted.connect(self.addItem)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.mNameEntry.textEdited.connect(self.setName)
+        self.mMotor1Entry.textEdited.connect(self.setMotor1Position)
+        self.mMotor2Entry.textEdited.connect(self.setMotor2Position)
+
+        self.nextMoveButton.clicked.connect(self.addMovetoSequence)
+
+        self.layout.addWidget(self.mNameLabel)
+        self.layout.addWidget(self.mNameEntry)
+        self.layout.addWidget(self.mMotor1Label)
+        self.layout.addWidget(self.mMotor1Entry)
+        self.layout.addWidget(self.mMotor2Label)
+        self.layout.addWidget(self.mMotor2Entry)
+        self.layout.addWidget(self.nextMoveButton)
+        self.layout.addWidget(self.buttonBox)
+
+    def setName(self, name):
+        self.__sequence.setName(name)
+
+    def addItem(self):
+        if self.__sequence.getName() != "name":
+            self.__listOfSequenceHandler.addItem(self.__sequence)
+
+    def setMotor1Position(self, pos):
+        self.__wantedPositions["motor1"] = pos
+
+    def setMotor2Position(self, pos):
+        self.__wantedPositions["motor2"] = pos
+
+    def addMovetoSequence(self):
+        self.__sequence.addMove(self.__motors, self.__wantedPositions)
+
 
 # unfinished class
 class Sequence(QListWidgetItem):
-    def __init__(self, name="name",motors = {}, status = False):
+    def __init__(self,motors = {}, name="name"):
         QListWidgetItem.__init__(self)
+        # QListWidgetItem method for setting the text of the item
         self.setText(name)
-        self.mMotors = {}
-        self.mStatus = status
+        self.__moves = []
+        self.__name = name
+        self.__motors = motors
 
-    # def addMotor(self, motor):
+    def setName(self, name):
+        self.setText(name)
+        self.__name = name
 
-# class for a motor and its characteristics
+    def getName(self):
+        return self.__name
+
+    # motorName: list of names of the motors (the keys to the positions dictionary)
+    # positions: dictionary of positions for a motor
+    def addMove(self, motors, positions):
+        newMove = Move(self.__motors)
+        for motorName in motors:
+            newMove.setMotorPosition(motorName, positions[motorName])
+        self.__moves.append(newMove)
+
+
+# Class for a move of a sequence
+class Move:
+    def __init__(self, motors = {}):
+        self.__motors = motors
+        # to store the different positions of the move
+        self.__movePositions = {}
+
+    def setMotorPosition(self, motorName, position):
+        if motorName in self.__motors:
+            # TODO: verify that it is an int/float
+            self.__motors[motorName].setPosition(position)
+            self.__movePositions[motorName] = position
+        else:
+            return "There's no motor named that way"
+
+    def getMotorPosition(self, motorName):
+        if motorName in self.__motors:
+            return self.__movePositions[motorName]
+        else:
+            return "There's no motor named that way"
+
+
+
+# Class for a motor and its characteristics
 class Motor:
     def __init__(self, name="name", pos = 0, status = False):
         self.__name = name
@@ -111,7 +205,17 @@ class MainWindow(QMainWindow):
         # self.setMaximumWidth(800)
         self.setIcon()
 
-        self.listItem = ListOfSequencesHandler(self.ui)
+        # ---------------
+        mot1 = Motor("motor1")
+        mot2 = Motor("motor2")
+        dictMot = dict()
+        dictMot[mot1.getName()] = mot1
+        dictMot[mot2.getName()] = mot2
+        # sequence1 = Sequence("testSequence", dictMot)
+        # ---------------
+
+        self.listItem = ListOfSequencesHandler(self.ui, dictMot)
+        #self.listItem.addItem(sequence1)
 
         self.initializeSliderPositions()
 
