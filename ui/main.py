@@ -13,12 +13,29 @@ from PySide2.QtCore import QRect, Qt
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
+import struct
+import serial
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
 # Implicit conversion to integers using __int__ is deprecated, and may be removed in a future version of Python.
 # self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
+
+# Define struct format for communicating messages
+# H (short, 2 bytes) : motor position
+# message size = 12 bytes
+s = struct.Struct('6H')
+
+# Establish serial connection
+# TODO: refactor as function
+port = 'COM3'
+try:
+    ser = serial.Serial(port, 9600)
+    print("Connected to %s" % port)
+except serial.serialutil.SerialException:
+    print("Failed to connect to %s." % port)
+# TODO: port should be chosen in the gui
 
 # Handler for the list of sequences
 class ListOfSequencesHandler:
@@ -69,7 +86,7 @@ class ListOfSequencesHandler:
 
 # Window for creating a new sequence
 class CreateSequenceWindow(QDialog):
-    def __init__(self, motors = {}, listOfSequenceHandler = None):
+    def __init__(self, motors={}, listOfSequenceHandler=None):
         QDialog.__init__(self)
         appIcon = QIcon("icon.jpg")
         self.setWindowIcon(appIcon)
@@ -212,6 +229,9 @@ class Motor:
 
     def setPosition(self, pos):
         self.__position=pos
+        print("%s: %d" % (self.__name, pos))
+        sendMessage()
+        # TODO: call sendMessage
 
     def getPosition(self):
         return self.__position
@@ -242,19 +262,19 @@ class MainWindow(QMainWindow):
         self.setIcon()
 
         # ---------------
-        mot1 = Motor("motor1")
-        mot2 = Motor("motor2")
-        mot3 = Motor("motor3")
-        mot4 = Motor("motor4")
-        mot5 = Motor("motor5")
-        mot6 = Motor("motor6")
+        self.mot1 = Motor("motor1")
+        self.mot2 = Motor("motor2")
+        self.mot3 = Motor("motor3")
+        self.mot4 = Motor("motor4")
+        self.mot5 = Motor("motor5")
+        self.mot6 = Motor("motor6")
         dictMot = dict()
-        dictMot[mot1.getName()] = mot1
-        dictMot[mot2.getName()] = mot2
-        dictMot[mot3.getName()] = mot3
-        dictMot[mot4.getName()] = mot4
-        dictMot[mot5.getName()] = mot5
-        dictMot[mot6.getName()] = mot6
+        dictMot[self.mot1.getName()] = self.mot1
+        dictMot[self.mot2.getName()] = self.mot2
+        dictMot[self.mot3.getName()] = self.mot3
+        dictMot[self.mot4.getName()] = self.mot4
+        dictMot[self.mot5.getName()] = self.mot5
+        dictMot[self.mot6.getName()] = self.mot6
         # ---------------
 
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, dictMot)
@@ -262,12 +282,12 @@ class MainWindow(QMainWindow):
         self.initializeSliderPositions()
 
         # Connect the slider signals
-        self.ui.slider_mot1.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot1, 1))
-        self.ui.slider_mot2.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot2, 2))
-        self.ui.slider_mot3.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot3, 3))
-        self.ui.slider_mot4.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot4, 4))
-        self.ui.slider_mot5.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot5, 5))
-        self.ui.slider_mot6.valueChanged.connect(lambda: changeMotorPosition(self.ui.slider_mot6, 6))
+        self.ui.slider_mot1.valueChanged.connect(lambda: self.mot1.setPosition(self.ui.slider_mot1.value()))
+        self.ui.slider_mot2.valueChanged.connect(lambda: self.mot2.setPosition(self.ui.slider_mot2.value()))
+        self.ui.slider_mot3.valueChanged.connect(lambda: self.mot3.setPosition(self.ui.slider_mot3.value()))
+        self.ui.slider_mot4.valueChanged.connect(lambda: self.mot4.setPosition(self.ui.slider_mot4.value()))
+        self.ui.slider_mot5.valueChanged.connect(lambda: self.mot5.setPosition(self.ui.slider_mot5.value()))
+        self.ui.slider_mot6.valueChanged.connect(lambda: self.mot6.setPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
@@ -293,11 +313,16 @@ class MainWindow(QMainWindow):
         self.ui.slider_mot6.setValue(mot6)
 
 
-# Slot to change a motor's position when the slider's value is changed
-def changeMotorPosition(slider, num):
-    value = slider.value()
-    print("Motor #%d: %d" % (num, value))
-    # TODO: make this into a sentence and send it to the controller
+# Send message to Arduino containing all motor values
+def sendMessage():
+    values = (window.mot1.getPosition(),
+              window.mot2.getPosition(),
+              window.mot3.getPosition(),
+              window.mot4.getPosition(),
+              window.mot5.getPosition(),
+              window.mot6.getPosition())
+    packed_data = s.pack(*values)
+    ser.write(packed_data)
 
 
 def calibrateVerticalAxis():
