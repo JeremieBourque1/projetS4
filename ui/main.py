@@ -7,9 +7,9 @@
 
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
-    QDialog, QDialogButtonBox, QLabel, QPushButton
+    QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import QRect
+from PySide2.QtCore import QRect, Qt
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -20,16 +20,26 @@ import warnings
 # self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
+# Handler for the list of sequences
 class ListOfSequencesHandler:
     def __init__(self, ui, motors = {}):
         self.__motors = motors
         self.mListOfSequences = ui.listOfSequences
         self.mCreateSequenceButton = ui.newSequence
-        # TODO: maybe move the connect elsewhere so there's no need for a private delete button
-        # connect the create button to the addWindow function which creates a new window
+
+        # Connect the create button to the addWindow function which creates a new window
         self.mCreateSequenceButton.clicked.connect(self.addWindow)
-        # connect the qwidgetlist to the custom right click menu
+
+        # Connect the qwidgetlist to the custom right click menu
         self.mListOfSequences.customContextMenuRequested.connect(self.showMenu)
+
+        # Put the sliders in a list
+        self.listOfSliders = []
+        for motor in motors:
+            slider = QSlider()
+            slider.setOrientation(Qt.Horizontal)
+            self.listOfSliders.append(slider)
+
 
     def addItem(self, item):
         self.mListOfSequences.addItem(item)
@@ -59,7 +69,6 @@ class ListOfSequencesHandler:
 
 # Window for creating a new sequence
 class CreateSequenceWindow(QDialog):
-    # TODO: get the motors
     def __init__(self, motors = {}, listOfSequenceHandler = None):
         QDialog.__init__(self)
         appIcon = QIcon("icon.jpg")
@@ -73,11 +82,13 @@ class CreateSequenceWindow(QDialog):
         self.layout = QVBoxLayout(self)
         self.mNameEntry = QLineEdit()
         self.mNameLabel = QLabel("Sequence Name")
-        # TODO: mettre des sliders pour les moteurs
-        self.mMotor1Entry = QLineEdit()
-        self.mMotor1Label = QLabel("Motor1 Position")
-        self.mMotor2Entry = QLineEdit()
-        self.mMotor2Label = QLabel("Motor2 Position")
+        self.__listOfMoves = QListWidget()
+
+        # Set the text for the labels
+        self.mMotorLabels = []
+        for motorNumber in range(0,len(motors)):
+            self.mMotorLabels.append(QLabel("Motor " + str(motorNumber+1) + " position"))
+
         self.nextMoveButton = QPushButton("Next Move")
         self.buttonBox = QDialogButtonBox()
 
@@ -87,17 +98,18 @@ class CreateSequenceWindow(QDialog):
         self.buttonBox.rejected.connect(self.reject)
 
         self.mNameEntry.textEdited.connect(self.setName)
-        self.mMotor1Entry.textEdited.connect(self.setMotor1Position)
-        self.mMotor2Entry.textEdited.connect(self.setMotor2Position)
 
         self.nextMoveButton.clicked.connect(self.addMovetoSequence)
 
+        self.__listOfMoves.itemDoubleClicked.connect(self.moveDoubleClicked)
+
+        # Build the vertical layout with the different widgets
         self.layout.addWidget(self.mNameLabel)
         self.layout.addWidget(self.mNameEntry)
-        self.layout.addWidget(self.mMotor1Label)
-        self.layout.addWidget(self.mMotor1Entry)
-        self.layout.addWidget(self.mMotor2Label)
-        self.layout.addWidget(self.mMotor2Entry)
+        self.layout.addWidget(self.__listOfMoves)
+        for motorNumber in range(len(self.__motors)):
+            self.layout.addWidget(self.mMotorLabels[motorNumber])
+            self.layout.addWidget(self.__listOfSequenceHandler.listOfSliders[motorNumber])
         self.layout.addWidget(self.nextMoveButton)
         self.layout.addWidget(self.buttonBox)
 
@@ -108,17 +120,45 @@ class CreateSequenceWindow(QDialog):
         if self.__sequence.getName() != "name":
             self.__listOfSequenceHandler.addItem(self.__sequence)
 
-    def setMotor1Position(self, pos):
-        self.__wantedPositions["motor1"] = pos
-
-    def setMotor2Position(self, pos):
-        self.__wantedPositions["motor2"] = pos
-
     def addMovetoSequence(self):
-        self.__sequence.addMove(self.__motors, self.__wantedPositions)
+        # Create the new move and set his positions
+        move = Move(self.__motors)
+        i = 0
+        for motorName in self.__motors:
+            move.setMotorPosition(motorName, self.__listOfSequenceHandler.listOfSliders[i].value())
+            i += 1
+        self.__sequence.addMove(move)
+
+        # Set text for the move label
+        labelText = "move " + self.__sequence.getNumberofMoves() +": "
+        i = 0
+        for motor in self.__motors:
+            labelText += self.__motors[motor].getName() + " " +\
+                         str(self.__listOfSequenceHandler.listOfSliders[i].value()) + ", "
+            i += 1
+        label = moveLabel(move,labelText,self.__motors)
+
+        # insert label to the head of the list
+        self.__listOfMoves.insertItem(0, label)
+
+    def moveDoubleClicked(self, moveItem):
+        moveItem.doubleClickEvent()
+
+# Class for the labels that are stored in the move list in the sequence creator
+class moveLabel(QListWidgetItem):
+    def __init__(self, move = None, text = None, motors = {}, parent=None):
+        QListWidgetItem.__init__(self, parent)
+        self.__move = move
+        self.__motors = motors
+        self.setText(text)
+
+    def doubleClickEvent(self):
+        # TODO: make the motors move to their respective positions
+        for motor in self.__motors:
+            print(motor + " "+ str(self.__move.getMotorPosition(motor)))
 
 
-# unfinished class
+# Class for a sequence of moves
 class Sequence(QListWidgetItem):
     def __init__(self,motors = {}, name="name"):
         QListWidgetItem.__init__(self)
@@ -135,14 +175,11 @@ class Sequence(QListWidgetItem):
     def getName(self):
         return self.__name
 
-    # motorName: list of names of the motors (the keys to the positions dictionary)
-    # positions: dictionary of positions for a motor
-    def addMove(self, motors, positions):
-        newMove = Move(self.__motors)
-        for motorName in motors:
-            newMove.setMotorPosition(motorName, positions[motorName])
+    def addMove(self, newMove):
         self.__moves.append(newMove)
 
+    def getNumberofMoves(self):
+        return str(len(self.__moves))
 
 # Class for a move of a sequence
 class Move:
@@ -153,7 +190,6 @@ class Move:
 
     def setMotorPosition(self, motorName, position):
         if motorName in self.__motors:
-            # TODO: verify that it is an int/float
             self.__motors[motorName].setPosition(position)
             self.__movePositions[motorName] = position
         else:
@@ -208,14 +244,20 @@ class MainWindow(QMainWindow):
         # ---------------
         mot1 = Motor("motor1")
         mot2 = Motor("motor2")
+        mot3 = Motor("motor3")
+        mot4 = Motor("motor4")
+        mot5 = Motor("motor5")
+        mot6 = Motor("motor6")
         dictMot = dict()
         dictMot[mot1.getName()] = mot1
         dictMot[mot2.getName()] = mot2
-        # sequence1 = Sequence("testSequence", dictMot)
+        dictMot[mot3.getName()] = mot3
+        dictMot[mot4.getName()] = mot4
+        dictMot[mot5.getName()] = mot5
+        dictMot[mot6.getName()] = mot6
         # ---------------
 
-        self.listItem = ListOfSequencesHandler(self.ui, dictMot)
-        #self.listItem.addItem(sequence1)
+        self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, dictMot)
 
         self.initializeSliderPositions()
 
