@@ -22,6 +22,9 @@ import serial
 # self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
+# App icon
+icon = 'icon.png'
+
 # Define struct format for communicating messages
 # H (short, 2 bytes) : motor position
 # message size = 12 bytes
@@ -88,7 +91,7 @@ class ListOfSequencesHandler:
 class CreateSequenceWindow(QDialog):
     def __init__(self, motors={}, listOfSequenceHandler=None):
         QDialog.__init__(self)
-        appIcon = QIcon("icon.jpg")
+        appIcon = QIcon(icon)
         self.setWindowIcon(appIcon)
 
         self.__listOfSequenceHandler = listOfSequenceHandler
@@ -293,7 +296,7 @@ class MainWindow(QMainWindow):
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
     def setIcon(self):
-        appIcon = QIcon("icon.jpg")
+        appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
     # Sets the slider position to the each motors initial position
