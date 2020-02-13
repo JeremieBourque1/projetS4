@@ -1,3 +1,5 @@
+#include <DynamixelWorkbench.h>
+
 // OpenCR device definition
 #if defined(__OPENCM904__)
   #define DEVICE_NAME "3" //Dynamixel on Serial3(USART3)  <-OpenCM 485EXP

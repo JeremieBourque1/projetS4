@@ -1,8 +1,9 @@
 #include <Arduino.h>
-#include <DynamixelWorkbench.h>
 #include "dynamixel.h" 
 
 // Declare constants
+int proximitySensor1 = 2;
+int proximitySensor2 = 4;
 const int MESSAGE_SIZE = 13;
 char endOfMessageChar = '\0';
 const int id1 = 221;
@@ -25,6 +26,7 @@ void readMessage(char *message);
 bool initDynamixel(uint8_t id);
 bool setJointMode(uint8_t id);
 void moveMotor(uint8_t id, int32_t pos);
+bool shouldSlowDown(bool motorDirection);
 
 // Arduino functions
 void setup() {
@@ -33,6 +35,8 @@ void setup() {
   initDynamixel(id1);
   setJointMode(id1);
   Serial.println("Ready");
+  pinMode(proximitySensor1, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  pinMode(proximitySensor2, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
 }
 
 void loop() {
@@ -101,4 +105,33 @@ bool readDataToStruct(dataPack *data)
     return false;
     
   return true;
+}
+
+//Checks the sensor's state and the motor direction. If motor is moving toward sensor and the sensor is FALSE
+// , it sends TRUE. If motor is moving away from sensor and sensor is FALSE, it sends FALSE.
+bool shouldSlowDown(bool motorDirection)
+{
+  proximitySensor1 = digitalRead(2); //defines the input to pin #2. The input is HIGH when nothing is capted
+
+  if (proximitySensor1 == false && motorDirection == true)
+  {
+    return true;
+  }
+
+  if (proximitySensor1 == false && motorDirection == false)
+  {
+    return false;
+  }
+  proximitySensor2 = digitalRead(4); //defines the input to pin #4. The input is HIGH when nothing is capted
+
+  if (proximitySensor2 == false && motorDirection == true)
+  {
+    return false;
+  }
+
+  if (proximitySensor2 == false && motorDirection == false)
+  {
+    return true;
+  }
+  
 }
