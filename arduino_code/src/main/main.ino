@@ -1,8 +1,12 @@
 #include <Arduino.h>
+#include <DynamixelWorkbench.h>
+#include "dynamixel.h" 
 
 // Declare constants
 const int MESSAGE_SIZE = 13;
 char endOfMessageChar = '\0';
+const int id1 = 221;
+
 
 // Struct of the data received and sent
 struct dataPack {
@@ -18,10 +22,16 @@ struct dataPack {
 // Function prototypes
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
+bool initDynamixel(uint8_t id);
+bool setJointMode(uint8_t id);
+void moveMotor(uint8_t id, int32_t pos);
 
 // Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
+  while(!Serial);
+  initDynamixel(id1);
+  setJointMode(id1);
   Serial.println("Ready");
 }
 
@@ -42,6 +52,7 @@ void loop() {
       //Serial.println(data.end);
 
       // TODO: Call move motor functinons
+      moveMotor(id1, data.p1);
     }
     else
     {
@@ -91,5 +102,3 @@ bool readDataToStruct(dataPack *data)
     
   return true;
 }
-
-
