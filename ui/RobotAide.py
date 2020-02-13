@@ -7,7 +7,7 @@
 
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
-    QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget
+    QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon
 from PySide2.QtCore import QRect, Qt
 from PySide2.QtUiTools import QUiLoader
@@ -32,7 +32,7 @@ s = struct.Struct('6H')
 
 # Establish serial connection
 # TODO: refactor as function
-port = 'COM3'
+port = 'COM4'
 try:
     ser = serial.Serial(port, 9600)
     print("Connected to %s" % port)
@@ -46,6 +46,7 @@ class ListOfSequencesHandler:
         self.__motors = motors
         self.mListOfSequences = ui.listOfSequences
         self.mCreateSequenceButton = ui.newSequence
+        self.__ui = ui
 
         # Connect the create button to the addWindow function which creates a new window
         self.mCreateSequenceButton.clicked.connect(self.addWindow)
@@ -75,6 +76,7 @@ class ListOfSequencesHandler:
 
     def addWindow(self):
         self.w = CreateSequenceWindow(self.__motors, self)
+        self.__ui.setEnabled(False)
         # 2 first number QPoint and 2 last QSize
         self.w.setGeometry(QRect(150, 150, 600, 400))
         self.w.show()
@@ -85,6 +87,9 @@ class ListOfSequencesHandler:
         menu.addAction("Modify Sequence")
         menu.addAction("Delete Sequence", self.removeSelectedItem)
         menu.exec_(self.mListOfSequences.mapToGlobal(event))
+
+    def enableUi(self):
+        self.__ui.setEnabled(True)
 
 
 # Window for creating a new sequence
@@ -98,11 +103,21 @@ class CreateSequenceWindow(QDialog):
         self.__motors = motors
         self.__sequence = Sequence(motors)
         self.__wantedPositions = {}
-
         self.layout = QVBoxLayout(self)
-        self.mNameEntry = QLineEdit()
-        self.mNameLabel = QLabel("Sequence Name")
+        self.__nameEntry = QLineEdit()
+        self.__nameLabel = QLabel("Sequence Name")
         self.__listOfMoves = QListWidget()
+
+        # Message to make the user put a name to the sequence
+        self.__noNameMessage = QMessageBox()
+        self.__noNameMessage.setText("Your sequence doesn't have a name by clicking the ok button "
+                                     "it will not be saved")
+        self.__noNameMessage.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        # Close the create sequence window and the message
+        self.__noNameMessage.accepted.connect(self.reject)
+        # Renable the create sequence window and closes the message
+        self.__noNameMessage.rejected.connect(self.enableWindow)
+
 
         # Set the text for the labels
         self.mMotorLabels = []
@@ -110,22 +125,26 @@ class CreateSequenceWindow(QDialog):
             self.mMotorLabels.append(QLabel("Motor " + str(motorNumber+1) + " position"))
 
         self.nextMoveButton = QPushButton("Next Move")
-        self.buttonBox = QDialogButtonBox()
 
+        self.buttonBox = QDialogButtonBox()
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
-        self.buttonBox.accepted.connect(self.accept)
+        # If ok pressed add the sequence to the list
         self.buttonBox.accepted.connect(self.addItem)
+        # If cancel pressed close the create sequence window
         self.buttonBox.rejected.connect(self.reject)
 
-        self.mNameEntry.textEdited.connect(self.setName)
+        # Renable the main window when the create sequence closes
+        self.rejected.connect(self.__listOfSequenceHandler.enableUi)
+        self.accepted.connect(self.__listOfSequenceHandler.enableUi)
 
+        self.__nameEntry.textEdited.connect(self.setName)
         self.nextMoveButton.clicked.connect(self.addMovetoSequence)
 
         self.__listOfMoves.itemDoubleClicked.connect(self.moveDoubleClicked)
 
         # Build the vertical layout with the different widgets
-        self.layout.addWidget(self.mNameLabel)
-        self.layout.addWidget(self.mNameEntry)
+        self.layout.addWidget(self.__nameLabel)
+        self.layout.addWidget(self.__nameEntry)
         self.layout.addWidget(self.__listOfMoves)
         for motorNumber in range(len(self.__motors)):
             self.layout.addWidget(self.mMotorLabels[motorNumber])
@@ -137,8 +156,13 @@ class CreateSequenceWindow(QDialog):
         self.__sequence.setName(name)
 
     def addItem(self):
-        if self.__sequence.getName() != "name":
+        if self.__sequence.getName() != "":
             self.__listOfSequenceHandler.addItem(self.__sequence)
+            self.accept()
+        else:
+            self.setEnabled(False)
+            self.__noNameMessage.exec_()
+
 
     def addMovetoSequence(self):
         # Create the new move and set his positions
@@ -161,8 +185,12 @@ class CreateSequenceWindow(QDialog):
         # insert label to the head of the list
         self.__listOfMoves.insertItem(0, label)
 
+    # Access the move positions when double clicked on
     def moveDoubleClicked(self, moveItem):
         moveItem.doubleClickEvent()
+
+    def enableWindow(self):
+        self.setEnabled(True)
 
 # Class for the labels that are stored in the move list in the sequence creator
 class moveLabel(QListWidgetItem):
@@ -180,7 +208,7 @@ class moveLabel(QListWidgetItem):
 
 # Class for a sequence of moves
 class Sequence(QListWidgetItem):
-    def __init__(self,motors = {}, name="name"):
+    def __init__(self,motors = {}, name=""):
         QListWidgetItem.__init__(self)
         # QListWidgetItem method for setting the text of the item
         self.setText(name)
@@ -205,8 +233,12 @@ class Sequence(QListWidgetItem):
 class Move:
     def __init__(self, motors = {}):
         self.__motors = motors
-        # to store the different positions of the move
-        self.__movePositions = {}
+
+        # To store the different positions of the move
+        self.__movePositions = dict()
+        # Initialize move positions to an invalid position (-1)
+        for motor in self.__motors:
+            self.__movePositions[motor] = -1
 
     def setMotorPosition(self, motorName, position):
         if motorName in self.__motors:
@@ -216,7 +248,7 @@ class Move:
             return "There's no motor named that way"
 
     def getMotorPosition(self, motorName):
-        if motorName in self.__motors:
+        if motorName in self.__movePositions:
             return self.__movePositions[motorName]
         else:
             return "There's no motor named that way"
@@ -225,16 +257,16 @@ class Move:
 
 # Class for a motor and its characteristics
 class Motor:
-    def __init__(self, name="name", pos = 0, status = False):
+    def __init__(self, mainWindow = None, name="", pos = 0, status = False):
         self.__name = name
         self.__position = pos
         self.__status = status
+        self.__window = mainWindow
 
     def setPosition(self, pos):
         self.__position=pos
-        print("%s: %d" % (self.__name, pos))
-        sendMessage()
-        # TODO: call sendMessage
+        # print("%s: %d" % (self.__name, pos))
+        sendMessage(self.__window)
 
     def getPosition(self):
         return self.__position
@@ -248,7 +280,7 @@ class Motor:
     def setStatus(self, status):
         self.__status = status
 
-    def getStatus(self):
+    def isEnabled(self):
         return self.__status
 
 
@@ -265,32 +297,23 @@ class MainWindow(QMainWindow):
         self.setIcon()
 
         # ---------------
-        self.mot1 = Motor("motor1")
-        self.mot2 = Motor("motor2")
-        self.mot3 = Motor("motor3")
-        self.mot4 = Motor("motor4")
-        self.mot5 = Motor("motor5")
-        self.mot6 = Motor("motor6")
-        dictMot = dict()
-        dictMot[self.mot1.getName()] = self.mot1
-        dictMot[self.mot2.getName()] = self.mot2
-        dictMot[self.mot3.getName()] = self.mot3
-        dictMot[self.mot4.getName()] = self.mot4
-        dictMot[self.mot5.getName()] = self.mot5
-        dictMot[self.mot6.getName()] = self.mot6
+        self.dictMot = dict()
+        for i in range(1, 7):
+            mot = Motor(self,"motor" + str(i))
+            self.dictMot[mot.getName()] = mot
         # ---------------
 
-        self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, dictMot)
+        self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
 
         self.initializeSliderPositions()
 
         # Connect the slider signals
-        self.ui.slider_mot1.valueChanged.connect(lambda: self.mot1.setPosition(self.ui.slider_mot1.value()))
-        self.ui.slider_mot2.valueChanged.connect(lambda: self.mot2.setPosition(self.ui.slider_mot2.value()))
-        self.ui.slider_mot3.valueChanged.connect(lambda: self.mot3.setPosition(self.ui.slider_mot3.value()))
-        self.ui.slider_mot4.valueChanged.connect(lambda: self.mot4.setPosition(self.ui.slider_mot4.value()))
-        self.ui.slider_mot5.valueChanged.connect(lambda: self.mot5.setPosition(self.ui.slider_mot5.value()))
-        self.ui.slider_mot6.valueChanged.connect(lambda: self.mot6.setPosition(self.ui.slider_mot6.value()))
+        self.ui.slider_mot1.valueChanged.connect(lambda: self.dictMot["motor1"].setPosition(self.ui.slider_mot1.value()))
+        self.ui.slider_mot2.valueChanged.connect(lambda: self.dictMot["motor2"].setPosition(self.ui.slider_mot2.value()))
+        self.ui.slider_mot3.valueChanged.connect(lambda: self.dictMot["motor3"].setPosition(self.ui.slider_mot3.value()))
+        self.ui.slider_mot4.valueChanged.connect(lambda: self.dictMot["motor4"].setPosition(self.ui.slider_mot4.value()))
+        self.ui.slider_mot5.valueChanged.connect(lambda: self.dictMot["motor5"].setPosition(self.ui.slider_mot5.value()))
+        self.ui.slider_mot6.valueChanged.connect(lambda: self.dictMot["motor6"].setPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
@@ -317,13 +340,13 @@ class MainWindow(QMainWindow):
 
 
 # Send message to Arduino containing all motor values
-def sendMessage():
-    values = (window.mot1.getPosition(),
-              window.mot2.getPosition(),
-              window.mot3.getPosition(),
-              window.mot4.getPosition(),
-              window.mot5.getPosition(),
-              window.mot6.getPosition())
+def sendMessage(mainWindow):
+    values = (mainWindow.dictMot["motor1"].getPosition(),
+              mainWindow.dictMot["motor2"].getPosition(),
+              mainWindow.dictMot["motor3"].getPosition(),
+              mainWindow.dictMot["motor4"].getPosition(),
+              mainWindow.dictMot["motor5"].getPosition(),
+              mainWindow.dictMot["motor6"].getPosition())
     packed_data = s.pack(*values)
     ser.write(packed_data)
 
