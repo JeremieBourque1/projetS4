@@ -2,7 +2,7 @@ import unittest
 import sys
 import os
 
-from ui import RobotAide
+from ui import RoboAide
 from PySide2.QtWidgets import QApplication
 from PySide2.QtTest import QTest
 from PySide2.QtCore import Qt
@@ -17,8 +17,8 @@ os.chdir("..")
 
 class TestMove(unittest.TestCase):
     def setUp(self):
-        self.testWindow = RobotAide.MainWindow()
-        self.testMove = RobotAide.Move(self.testWindow.dictMot)
+        self.testWindow = RoboAide.MainWindow()
+        self.testMove = RoboAide.Move(self.testWindow.dictMot)
 
     def test_get_position(self):
         for motor in self.testWindow.dictMot:
@@ -36,8 +36,8 @@ class TestMove(unittest.TestCase):
 
 class TestMotor(unittest.TestCase):
     def setUp(self):
-        self.testWindow = RobotAide.MainWindow()
-        self.testMotor = RobotAide.Motor(self.testWindow,"testMotor",500,True)
+        self.testWindow = RoboAide.MainWindow()
+        self.testMotor = RoboAide.Motor(self.testWindow, "testMotor", 500, True)
 
     def test_get_position(self):
         self.assertEqual(self.testMotor.getPosition(),500)

@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import QRect, Qt
+from PySide2.QtCore import QRect, Qt, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -25,6 +25,10 @@ warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 # App icon
 icon = 'icon.png'
 
+# Serial communication port
+commPort = 'COM3'
+# TODO: port should be chosen in the gui
+
 # Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
 
 # Define struct format for communicating messages
@@ -32,15 +36,28 @@ icon = 'icon.png'
 # message size = 12 bytes
 s = struct.Struct('6H')
 
+
 # Establish serial connection
-# TODO: refactor as function
-port = 'COM4'
-try:
-    ser = serial.Serial(port, 9600)
-    print("Connected to %s" % port)
-except serial.serialutil.SerialException:
-    print("Failed to connect to %s." % port)
-# TODO: port should be chosen in the gui
+def initSerialConnection(port):
+    try:
+        ser = serial.Serial(port, 9600)
+        print("Connected to %s" % port)
+        return ser
+    except serial.serialutil.SerialException:
+        print("Failed to connect to %s." % port)
+
+
+# Class for a thread that handles incoming serial messages
+class MessageReception(QThread):
+    # TODO: We need to receive logs (lines of text) and motor data than can be unpacked into the struct.
+    def run(self):
+        print("Message Reception thread started")
+        while True:
+            try:
+                print(comm.readline())
+            except (AttributeError, NameError) as e:
+                pass
+
 
 # Handler for the list of sequences
 class ListOfSequencesHandler:
@@ -65,7 +82,6 @@ class ListOfSequencesHandler:
             slider = QSlider()
             slider.setOrientation(Qt.Horizontal)
             self.listOfSliders.append(slider)
-
 
     def addItem(self, item):
         self.mListOfSequences.addItem(item)
@@ -123,7 +139,6 @@ class CreateSequenceWindow(QDialog):
         # Renable the create sequence window and closes the message
         self.__noNameMessage.rejected.connect(self.enableWindow)
 
-
         # Set the text for the labels
         self.mMotorLabels = []
         for motorNumber in range(0,len(motors)):
@@ -168,7 +183,6 @@ class CreateSequenceWindow(QDialog):
             self.setEnabled(False)
             self.__noNameMessage.exec_()
 
-
     def addMovetoSequence(self):
         # Create the new move and set his positions
         move = Move(self.__motors)
@@ -196,6 +210,7 @@ class CreateSequenceWindow(QDialog):
 
     def enableWindow(self):
         self.setEnabled(True)
+
 
 # Class for the labels that are stored in the move list in the sequence creator
 class moveLabel(QListWidgetItem):
@@ -234,6 +249,7 @@ class Sequence(QListWidgetItem):
     def getNumberofMoves(self):
         return str(len(self.__moves))
 
+
 # Class for a move of a sequence
 class Move:
     def __init__(self, motors = {}):
@@ -259,7 +275,6 @@ class Move:
             return "There's no motor named that way"
 
 
-
 # Class for a motor and its characteristics
 class Motor:
     def __init__(self, mainWindow = None, name="", pos = 0, status = False):
@@ -270,7 +285,7 @@ class Motor:
 
     def setPosition(self, pos):
         self.__position=pos
-        # print("%s: %d" % (self.__name, pos))
+        print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
     def getPosition(self):
@@ -300,6 +315,10 @@ class MainWindow(QMainWindow):
         # self.setMaximumHeight(200)
         # self.setMaximumWidth(800)
         self.setIcon()
+
+        # Serial communication
+        self.msgReception = MessageReception()
+        self.msgReception.start()
 
         # ---------------
         self.dictMot = dict()
@@ -353,7 +372,10 @@ def sendMessage(mainWindow):
               mainWindow.dictMot["motor5"].getPosition(),
               mainWindow.dictMot["motor6"].getPosition())
     packed_data = s.pack(*values)
-    ser.write(packed_data)
+    try:
+        comm.write(packed_data)
+    except (AttributeError, NameError) as e:
+        print("Error sending message")
 
 
 def calibrateVerticalAxis():
@@ -362,6 +384,7 @@ def calibrateVerticalAxis():
 
 
 if __name__ == "__main__":
+    comm = initSerialConnection(commPort)
     app = QApplication(sys.argv)
     window = MainWindow()
     app.exec_()
