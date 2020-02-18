@@ -25,6 +25,8 @@ warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 # App icon
 icon = 'icon.png'
 
+# Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
+
 # Define struct format for communicating messages
 # H (short, 2 bytes) : motor position
 # message size = 12 bytes
