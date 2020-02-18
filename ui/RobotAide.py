@@ -42,6 +42,9 @@ except serial.serialutil.SerialException:
 
 # Handler for the list of sequences
 class ListOfSequencesHandler:
+    """
+    test for documentation
+    """
     def __init__(self, ui, motors = {}):
         self.__motors = motors
         self.mListOfSequences = ui.listOfSequences
