@@ -137,7 +137,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QPushButton" name="newSequence">
+         <widget class="QPushButton" name="createSequenceButton">
           <property name="text">
            <string>Create new sequence</string>
           </property>

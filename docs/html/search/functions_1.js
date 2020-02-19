@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['additem_63',['addItem',['../classui_1_1_robot_aide_1_1_list_of_sequences_handler.html#a2c6207c56305da0b92308e1059622737',1,'ui.RobotAide.ListOfSequencesHandler.addItem()'],['../classui_1_1_robot_aide_1_1_create_sequence_window.html#a8b55b2013574802a62f94585edbeee2e',1,'ui.RobotAide.CreateSequenceWindow.addItem()']]],
-  ['addmove_64',['addMove',['../classui_1_1_robot_aide_1_1_sequence.html#a113e0a9482cd969f7c5e205403b28183',1,'ui::RobotAide::Sequence']]],
-  ['addmovetosequence_65',['addMovetoSequence',['../classui_1_1_robot_aide_1_1_create_sequence_window.html#a2d692ae4be5da331f8bc73b77b60f6d3',1,'ui::RobotAide::CreateSequenceWindow']]],
-  ['addwindow_66',['addWindow',['../classui_1_1_robot_aide_1_1_list_of_sequences_handler.html#af6be6505a06f3f83e92a40f54cbaf383',1,'ui::RobotAide::ListOfSequencesHandler']]]
+  ['additem_83',['addItem',['../classui_1_1_robo_aide_1_1_list_of_sequences_handler.html#af80af157ae260dfc1c35f1869a75cd25',1,'ui.RoboAide.ListOfSequencesHandler.addItem()'],['../classui_1_1_robo_aide_1_1_create_sequence_window.html#af8e212de4652733f2ecf6cba4ba3487d',1,'ui.RoboAide.CreateSequenceWindow.addItem()']]],
+  ['addmove_84',['addMove',['../classui_1_1_robo_aide_1_1_sequence.html#a1c70163f6b5629d976cda883e54dacb1',1,'ui::RoboAide::Sequence']]],
+  ['addmovetosequence_85',['addMovetoSequence',['../classui_1_1_robo_aide_1_1_create_sequence_window.html#a5d76e8a921644bf88c4f1f578d2002ba',1,'ui::RoboAide::CreateSequenceWindow']]]
 ];

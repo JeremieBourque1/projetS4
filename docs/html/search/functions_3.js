@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['doubleclickevent_68',['doubleClickEvent',['../classui_1_1_robot_aide_1_1move_label.html#afa0a0600d02a5600d9b597cee10673f0',1,'ui::RobotAide::moveLabel']]]
+  ['doubleclickevent_88',['doubleClickEvent',['../classui_1_1_robo_aide_1_1move_label.html#a662b292e36696a79adca4c67391b91bf',1,'ui::RoboAide::moveLabel']]]
 ];

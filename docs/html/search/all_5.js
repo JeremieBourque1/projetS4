@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['enableui_12',['enableUi',['../classui_1_1_robot_aide_1_1_list_of_sequences_handler.html#a876e405a7016377c64fb84a599eff4b9',1,'ui::RobotAide::ListOfSequencesHandler']]],
-  ['enablewindow_13',['enableWindow',['../classui_1_1_robot_aide_1_1_create_sequence_window.html#a526bf78e15a6aff45cc453e9bf732832',1,'ui::RobotAide::CreateSequenceWindow']]]
+  ['enableui_33',['enableUi',['../classui_1_1_robo_aide_1_1_list_of_sequences_handler.html#a6560fd66d43590806e7a27b2bf60b5a5',1,'ui::RoboAide::ListOfSequencesHandler']]],
+  ['enablewindow_34',['enableWindow',['../classui_1_1_robo_aide_1_1_create_sequence_window.html#aa2f11945aca6db2222d67f4cbd4c4ab9',1,'ui::RoboAide::CreateSequenceWindow']]]
 ];

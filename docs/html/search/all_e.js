@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['robotaide_47',['RobotAide',['../namespaceui_1_1_robot_aide.html',1,'ui']]],
-  ['ui_48',['ui',['../namespaceui.html',1,'ui'],['../classui_1_1_robot_aide_1_1_main_window.html#abd2dfb5ed64e771210435d837e90d1bf',1,'ui.RobotAide.MainWindow.ui()']]]
+  ['window_69',['window',['../namespaceui_1_1_robo_aide.html#a9de3c069217dd27cfa710c8fe9467f74',1,'ui::RoboAide']]]
 ];

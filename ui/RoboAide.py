@@ -22,23 +22,28 @@ import serial
 # self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
-# App icon
+## App icon
 icon = 'icon.png'
 
-# Serial communication port
+## Serial communication port
 commPort = 'COM3'
 # TODO: port should be chosen in the gui
 
 # Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
+# Ignore the part with the py_filter.py!!
+# To see the doc go to docs->html->index.html
 
-# Define struct format for communicating messages
+## Define struct format for communicating messages
 # H (short, 2 bytes) : motor position
 # message size = 12 bytes
 s = struct.Struct('6H')
 
-
-# Establish serial connection
 def initSerialConnection(port):
+    """
+    Initialize the serial connection with the device connected on the port
+    :param port: The serial port which the Arduino is connected on
+    :return: Serial object which is used to communicate with the Arduino
+    """
     try:
         ser = serial.Serial(port, 9600)
         print("Connected to %s" % port)
@@ -46,9 +51,10 @@ def initSerialConnection(port):
     except serial.serialutil.SerialException:
         print("Failed to connect to %s." % port)
 
-
-# Class for a thread that handles incoming serial messages
 class MessageReception(QThread):
+    """
+    Class for a thread that handles incoming serial messages
+    """
     # TODO: We need to receive logs (lines of text) and motor data than can be unpacked into the struct.
     def run(self):
         print("Message Reception thread started")
@@ -58,25 +64,35 @@ class MessageReception(QThread):
             except (AttributeError, NameError) as e:
                 pass
 
-
-# Handler for the list of sequences
 class ListOfSequencesHandler:
     """
-    test for documentation
+    Handler for the list of sequences
     """
     def __init__(self, ui, motors = {}):
+        """
+        Initializtion of the handler for the list of sequences
+        :param ui: The ui in which the list of sequence is in
+        :param motors: The dictionary of all the motors
+        """
+        ## The dictionary of all the motors
         self.__motors = motors
-        self.mListOfSequences = ui.listOfSequences
-        self.mCreateSequenceButton = ui.newSequence
+        ## The list of sequence
+        self.__listOfSequences = ui.listOfSequences
+        ## The create a new sequence button
+        self.__createSequenceButton = ui.createSequenceButton
+        ## The ui in which the list of sequence is in
         self.__ui = ui
+        ## The window in which the new sequence will be created
+        self.__window = None
 
-        # Connect the create button to the addWindow function which creates a new window
-        self.mCreateSequenceButton.clicked.connect(self.addWindow)
+        # Create a new window when the create sequence button is clicked
+        self.__createSequenceButton.clicked.connect(self.createWindow)
 
         # Connect the qwidgetlist to the custom right click menu
-        self.mListOfSequences.customContextMenuRequested.connect(self.showMenu)
+        self.__listOfSequences.customContextMenuRequested.connect(self.showMenu)
 
-        # Put the sliders in a list
+        # Put the sliders of the create sequence window in a list
+        ## List of sliders in the create sequence window
         self.listOfSliders = []
         for motor in motors:
             slider = QSlider()
@@ -84,52 +100,87 @@ class ListOfSequencesHandler:
             self.listOfSliders.append(slider)
 
     def addItem(self, item):
-        self.mListOfSequences.addItem(item)
-
-    def removeItem(self, row):
-        self.mListOfSequences.takeItem(row)
+        """
+        Add an item to the list of sequence
+        :param item: The item to add
+        :return: No return
+        """
+        self.__listOfSequences.addItem(item)
 
     def removeSelectedItem(self):
-        listItems = self.mListOfSequences.selectedItems()
+        """
+        Removes the selected item in the list
+        :return: No return
+        """
+        listItems = self.__listOfSequences.selectedItems()
         if not listItems: return
         for item in listItems:
-            self.mListOfSequences.takeItem(self.mListOfSequences.row(item))
+            self.__listOfSequences.takeItem(self.__listOfSequences.row(item))
 
-    def addWindow(self):
-        self.w = CreateSequenceWindow(self.__motors, self)
+    def createWindow(self):
+        """
+        Create the window for to create a new sequence
+        :return: No return
+        """
+        self.__window = CreateSequenceWindow(self.__motors, self)
         self.__ui.setEnabled(False)
-        # 2 first number QPoint and 2 last QSize
-        self.w.setGeometry(QRect(150, 150, 600, 400))
-        self.w.show()
+        # 2 first number QPoint where the window is created and 2 last QSize(the size of the window)
+        self.__window.setGeometry(QRect(150, 150, 600, 400))
+        self.__window.show()
 
     def showMenu(self, event):
+        """
+        The right click menu of the sequence of the list
+        :param event: The event (here right click) that makes the menu come up
+        :return: No return
+        """
         menu = QMenu()
         # TODO: implement the Modify Sequence functionality (show the characteristics and modify them)
         menu.addAction("Modify Sequence")
+        # Add a button in the menu that when clicked, it deletes the sequence in the list
         menu.addAction("Delete Sequence", self.removeSelectedItem)
-        menu.exec_(self.mListOfSequences.mapToGlobal(event))
+        menu.exec_(self.__listOfSequences.mapToGlobal(event))
 
     def enableUi(self):
+        """
+        Enable the ui
+        :return: No return
+        """
         self.__ui.setEnabled(True)
 
-
-# Window for creating a new sequence
 class CreateSequenceWindow(QDialog):
+    """
+    Window for creating a new sequence
+    """
     def __init__(self, motors={}, listOfSequenceHandler=None):
+        """
+        Initializtion of the window for creating a new sequence
+        :param motors: The dictionary of all the motors
+        :param listOfSequenceHandler: The handler of the list of sequence
+        """
         QDialog.__init__(self)
+        # Set the window icon
         appIcon = QIcon(icon)
         self.setWindowIcon(appIcon)
 
+        ## The handler of the list of sequence
         self.__listOfSequenceHandler = listOfSequenceHandler
+        ## The dictionary of all the motors
         self.__motors = motors
+        ## The new sequence
         self.__sequence = Sequence(motors)
+        ## A dictionary of the positions of the new sequence
         self.__wantedPositions = {}
-        self.layout = QVBoxLayout(self)
+        ## The layout of the create sequence window
+        self.__layout = QVBoxLayout(self)
+        ## The widget for the name of the sequence
         self.__nameEntry = QLineEdit()
+        ## The label for the widget in which the name of the sequence is written
         self.__nameLabel = QLabel("Sequence Name")
+        ## The list of the different moves that forms the sequence
         self.__listOfMoves = QListWidget()
 
-        # Message to make the user put a name to the sequence
+        ## Message to make the user put a name to the sequence
         self.__noNameMessage = QMessageBox()
         self.__noNameMessage.setText("Your sequence doesn't have a name by clicking the ok button "
                                      "it will not be saved")
@@ -140,12 +191,15 @@ class CreateSequenceWindow(QDialog):
         self.__noNameMessage.rejected.connect(self.enableWindow)
 
         # Set the text for the labels
-        self.mMotorLabels = []
+        ## Labels for the motors in the UI
+        self.__motorLabels = []
         for motorNumber in range(0,len(motors)):
-            self.mMotorLabels.append(QLabel("Motor " + str(motorNumber+1) + " position"))
+            self.__motorLabels.append(QLabel("Motor " + str(motorNumber+1) + " position"))
 
+        ## Button to add a move to the sequence and procede to the next move
         self.nextMoveButton = QPushButton("Next Move")
 
+        ## Buttons to accept or cancel the creation of a sequence
         self.buttonBox = QDialogButtonBox()
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
         # If ok pressed add the sequence to the list
@@ -163,19 +217,28 @@ class CreateSequenceWindow(QDialog):
         self.__listOfMoves.itemDoubleClicked.connect(self.moveDoubleClicked)
 
         # Build the vertical layout with the different widgets
-        self.layout.addWidget(self.__nameLabel)
-        self.layout.addWidget(self.__nameEntry)
-        self.layout.addWidget(self.__listOfMoves)
+        self.__layout.addWidget(self.__nameLabel)
+        self.__layout.addWidget(self.__nameEntry)
+        self.__layout.addWidget(self.__listOfMoves)
         for motorNumber in range(len(self.__motors)):
-            self.layout.addWidget(self.mMotorLabels[motorNumber])
-            self.layout.addWidget(self.__listOfSequenceHandler.listOfSliders[motorNumber])
-        self.layout.addWidget(self.nextMoveButton)
-        self.layout.addWidget(self.buttonBox)
+            self.__layout.addWidget(self.__motorLabels[motorNumber])
+            self.__layout.addWidget(self.__listOfSequenceHandler.listOfSliders[motorNumber])
+        self.__layout.addWidget(self.nextMoveButton)
+        self.__layout.addWidget(self.buttonBox)
 
     def setName(self, name):
+        """
+        Sets the name of the sequence with the user input
+        :param name: The name of the sequence
+        :return: No return
+        """
         self.__sequence.setName(name)
 
     def addItem(self):
+        """
+        Add the sequence to the list of sequence
+        :return:
+        """
         if self.__sequence.getName() != "":
             self.__listOfSequenceHandler.addItem(self.__sequence)
             self.accept()
@@ -184,6 +247,11 @@ class CreateSequenceWindow(QDialog):
             self.__noNameMessage.exec_()
 
     def addMovetoSequence(self):
+        """
+        Add the last move to the sequence
+        :return:
+        """
+
         # Create the new move and set his positions
         move = Move(self.__motors)
         i = 0
@@ -206,21 +274,42 @@ class CreateSequenceWindow(QDialog):
 
     # Access the move positions when double clicked on
     def moveDoubleClicked(self, moveItem):
+        """
+        Called when a move in the sequence is double clicked
+        :param moveItem: the move that was double clicked
+        :return: No return
+        """
         moveItem.doubleClickEvent()
 
     def enableWindow(self):
+        """
+        Enable the create sequence window
+        :return:
+        """
         self.setEnabled(True)
 
-
-# Class for the labels that are stored in the move list in the sequence creator
 class moveLabel(QListWidgetItem):
+    """
+    Class for the custom labels that are stored in the move list in the sequence creator
+    """
     def __init__(self, move = None, text = None, motors = {}, parent=None):
+        """
+        Initialization of the move label
+        :param move: The move
+        :param text: The text in the label
+        :param motors: Dictionary of all the motors
+        :param parent: The Qt parent
+        """
         QListWidgetItem.__init__(self, parent)
         self.__move = move
         self.__motors = motors
         self.setText(text)
 
     def doubleClickEvent(self):
+        """
+        Handles the event when the move lable is double clicked
+        :return:
+        """
         # TODO: make the motors move to their respective positions
         for motor in self.__motors:
             print(motor + " "+ str(self.__move.getMotorPosition(motor)))
@@ -228,6 +317,9 @@ class moveLabel(QListWidgetItem):
 
 # Class for a sequence of moves
 class Sequence(QListWidgetItem):
+    """
+
+    """
     def __init__(self,motors = {}, name=""):
         QListWidgetItem.__init__(self)
         # QListWidgetItem method for setting the text of the item

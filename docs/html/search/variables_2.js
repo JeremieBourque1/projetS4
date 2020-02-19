@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['dictmot_89',['dictMot',['../classui_1_1_robot_aide_1_1_main_window.html#a3f4150ad58c95d189e69db11fccf5a98',1,'ui::RobotAide::MainWindow']]]
+  ['buttonbox_128',['buttonBox',['../classui_1_1_robo_aide_1_1_create_sequence_window.html#ac7d7082ca69eabedee745d60b398cc47',1,'ui::RoboAide::CreateSequenceWindow']]]
 ];

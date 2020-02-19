@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['sendmessage_80',['sendMessage',['../namespaceui_1_1_robot_aide.html#a12fe25154c6319616686d210df8e3e01',1,'ui::RobotAide']]],
-  ['seticon_81',['setIcon',['../classui_1_1_robot_aide_1_1_main_window.html#a673995b15fbb05b5f5528d6e6e6f167f',1,'ui::RobotAide::MainWindow']]],
-  ['setmotorposition_82',['setMotorPosition',['../classui_1_1_robot_aide_1_1_move.html#a0b63d06b4d75b211b88140a77a3152dc',1,'ui::RobotAide::Move']]],
-  ['setname_83',['setName',['../classui_1_1_robot_aide_1_1_create_sequence_window.html#ab921a69a8c39806cd8daad7df50d7470',1,'ui.RobotAide.CreateSequenceWindow.setName()'],['../classui_1_1_robot_aide_1_1_sequence.html#ad2b401c3527459e7536df9fb5fb23715',1,'ui.RobotAide.Sequence.setName()'],['../classui_1_1_robot_aide_1_1_motor.html#a550cb480d326c4990b2a9659b6c7fba9',1,'ui.RobotAide.Motor.setName()']]],
-  ['setposition_84',['setPosition',['../classui_1_1_robot_aide_1_1_motor.html#a99175e81a2933df5ef31fd46d1f56996',1,'ui::RobotAide::Motor']]],
-  ['setstatus_85',['setStatus',['../classui_1_1_robot_aide_1_1_motor.html#a0dedfdc6faf56f67819285015f49694f',1,'ui::RobotAide::Motor']]],
-  ['showmenu_86',['showMenu',['../classui_1_1_robot_aide_1_1_list_of_sequences_handler.html#a5300a87306a21f2fd2bca8241429b65c',1,'ui::RobotAide::ListOfSequencesHandler']]]
+  ['sendmessage_101',['sendMessage',['../namespaceui_1_1_robo_aide.html#a6e9598ccbecb167a2492728ad469e419',1,'ui::RoboAide']]],
+  ['seticon_102',['setIcon',['../classui_1_1_robo_aide_1_1_main_window.html#a2678ce68ddea92f6a8e1f28f4fbbe7a3',1,'ui::RoboAide::MainWindow']]],
+  ['setmotorposition_103',['setMotorPosition',['../classui_1_1_robo_aide_1_1_move.html#a1b0136ab0b037ae4a892a520f373a222',1,'ui::RoboAide::Move']]],
+  ['setname_104',['setName',['../classui_1_1_robo_aide_1_1_create_sequence_window.html#a8cbf3deba5e06202fe40f9dbba43e241',1,'ui.RoboAide.CreateSequenceWindow.setName()'],['../classui_1_1_robo_aide_1_1_sequence.html#a4553a7f33ca79acf8be1c2c104788540',1,'ui.RoboAide.Sequence.setName()'],['../classui_1_1_robo_aide_1_1_motor.html#a708afcad06b4e79d5b8ee0fac906096c',1,'ui.RoboAide.Motor.setName()']]],
+  ['setposition_105',['setPosition',['../classui_1_1_robo_aide_1_1_motor.html#a2eae0de61f53f153770f6ad73462853e',1,'ui::RoboAide::Motor']]],
+  ['setstatus_106',['setStatus',['../classui_1_1_robo_aide_1_1_motor.html#a6c199498cb52c841e65971e991b3df01',1,'ui::RoboAide::Motor']]],
+  ['showmenu_107',['showMenu',['../classui_1_1_robo_aide_1_1_list_of_sequences_handler.html#aa47b476b9d2624d6c8e0a338579bd6cf',1,'ui::RoboAide::ListOfSequencesHandler']]]
 ];

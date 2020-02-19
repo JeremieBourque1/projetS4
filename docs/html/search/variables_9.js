@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ui_100',['ui',['../classui_1_1_robot_aide_1_1_main_window.html#abd2dfb5ed64e771210435d837e90d1bf',1,'ui::RobotAide::MainWindow']]]
+  ['s_138',['s',['../namespaceui_1_1_robo_aide.html#a7615691f193f1e9310f7641a954a1f2d',1,'ui::RoboAide']]]
 ];

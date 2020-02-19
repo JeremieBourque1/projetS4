@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['buttonbox_7',['buttonBox',['../classui_1_1_robot_aide_1_1_create_sequence_window.html#a7f19c821b3cc7e189be22b5ec7c539ed',1,'ui::RobotAide::CreateSequenceWindow']]]
+  ['buttonbox_25',['buttonBox',['../classui_1_1_robo_aide_1_1_create_sequence_window.html#ac7d7082ca69eabedee745d60b398cc47',1,'ui::RoboAide::CreateSequenceWindow']]]
 ];

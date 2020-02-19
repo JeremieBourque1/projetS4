@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['icon_18',['icon',['../namespaceui_1_1_robot_aide.html#ab103cedde6a86cb3aa261c49da94dc14',1,'ui::RobotAide']]],
-  ['initializesliderpositions_19',['initializeSliderPositions',['../classui_1_1_robot_aide_1_1_main_window.html#a4e3c22c61f7f993749bcf6cd2de93f45',1,'ui::RobotAide::MainWindow']]],
-  ['isenabled_20',['isEnabled',['../classui_1_1_robot_aide_1_1_motor.html#a9977b8c836e40f7cab5cc07929554a96',1,'ui::RobotAide::Motor']]]
+  ['icon_39',['icon',['../namespaceui_1_1_robo_aide.html#a293d8b82867101b0087df4245a7d6024',1,'ui::RoboAide']]],
+  ['initializesliderpositions_40',['initializeSliderPositions',['../classui_1_1_robo_aide_1_1_main_window.html#af75014e56cae670cdce73f09fcf89041',1,'ui::RoboAide::MainWindow']]],
+  ['initserialconnection_41',['initSerialConnection',['../namespaceui_1_1_robo_aide.html#ab8d8cff61c710210b2378bcfa5ef7527',1,'ui::RoboAide']]],
+  ['isenabled_42',['isEnabled',['../classui_1_1_robo_aide_1_1_motor.html#a8775501c4772f1359326daa83c2799fa',1,'ui::RoboAide::Motor']]]
 ];
