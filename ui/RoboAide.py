@@ -15,6 +15,7 @@ import sys
 import warnings
 import struct
 import serial
+import time
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -36,16 +37,18 @@ commPort = 'COM3'
 ## Define struct format for communicating messages
 # H (short, 2 bytes) : motor position
 # message size = 12 bytes
-s = struct.Struct('6H')
+structDefinition = '6Hc'
+s = struct.Struct(structDefinition)
+messageSize = struct.calcsize(structDefinition)
 
 def initSerialConnection(port):
     """
-    Initialize the serial connection with the device connected on the port
-    :param port: The serial port which the Arduino is connected on
-    :return: Serial object which is used to communicate with the Arduino
+    Initialize serial communication with a specified port
+    :param port: port name
+    :return: serial communication object
     """
     try:
-        ser = serial.Serial(port, 9600)
+        ser = serial.Serial(port, 9600, timeout=0.1)
         print("Connected to %s" % port)
         return ser
     except serial.serialutil.SerialException:
@@ -55,12 +58,20 @@ class MessageReception(QThread):
     """
     Class for a thread that handles incoming serial messages
     """
-    # TODO: We need to receive logs (lines of text) and motor data than can be unpacked into the struct.
+    def __init__(self):
+        super(MessageReception, self).__init__()
+        self.shouldRun = True;
+        self.counter = 0
     def run(self):
         print("Message Reception thread started")
-        while True:
-            try:
-                print(comm.readline())
+        while self.shouldRun:
+            time.sleep(0)  # TODO: this significantly improves performance. Why?
+            try:  # TODO: remove try except
+                message = comm.read(messageSize+1)  # TODO: Find out why an extra bit is received
+                if len(message) != 0:
+                    print(str(self.counter) + ": ", end='')
+                    print(s.unpack(message[:-1]))  # Unpack message while excluding the extra bit
+                    self.counter += 1
             except (AttributeError, NameError) as e:
                 pass
 
@@ -397,8 +408,15 @@ class Motor:
 
 
 class MainWindow(QMainWindow):
+    """
+    Main window class
+    """
     def __init__(self):
+        """
+        MainWindow initialization
+        """
         super(MainWindow, self).__init__()
+        ## ui object
         self.ui = QUiLoader().load("mainwindow.ui")
         self.ui.show()
         self.ui.setWindowTitle("RoboAide")
@@ -409,16 +427,19 @@ class MainWindow(QMainWindow):
         self.setIcon()
 
         # Serial communication
+        ## Message reception QThread object
         self.msgReception = MessageReception()
         self.msgReception.start()
 
         # ---------------
+        ## Dictionnary of all motor objects
         self.dictMot = dict()
         for i in range(1, 7):
             mot = Motor(self,"motor" + str(i))
             self.dictMot[mot.getName()] = mot
         # ---------------
 
+        ## ListOfSequencesHandler object
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
 
         self.initializeSliderPositions()
@@ -435,11 +456,19 @@ class MainWindow(QMainWindow):
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
     def setIcon(self):
+        """
+        Set main window icon
+        :return: None
+        """
         appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
     # Sets the slider position to the each motors initial position
     def initializeSliderPositions(self):
+        """
+        Initialize motor slider positions
+        :return: None
+        """
         # TODO: get the position value for each motor
         mot1 = 0
         mot2 = 0
@@ -457,12 +486,18 @@ class MainWindow(QMainWindow):
 
 # Send message to Arduino containing all motor values
 def sendMessage(mainWindow):
+    """
+    Package message and send on communication port
+    :param mainWindow: mainWindow object
+    :return: None
+    """
     values = (mainWindow.dictMot["motor1"].getPosition(),
               mainWindow.dictMot["motor2"].getPosition(),
               mainWindow.dictMot["motor3"].getPosition(),
               mainWindow.dictMot["motor4"].getPosition(),
               mainWindow.dictMot["motor5"].getPosition(),
-              mainWindow.dictMot["motor6"].getPosition())
+              mainWindow.dictMot["motor6"].getPosition(),
+              b'\0')
     packed_data = s.pack(*values)
     try:
         comm.write(packed_data)
@@ -471,6 +506,10 @@ def sendMessage(mainWindow):
 
 
 def calibrateVerticalAxis():
+    """
+    Trigger vertical axis calibration
+    :return: None
+    """
     print("Calibrating vertical axis")
     # TODO: launch calibration process on controller
 

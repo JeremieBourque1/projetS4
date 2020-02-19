@@ -37,7 +37,7 @@ void setup() {
   while(!Serial);
   initDynamixel(id1);
   setJointMode(id1);
-  Serial.println("Ready");
+  //Serial.println("Ready");
   pinMode(proximitySensor1, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   pinMode(proximitySensor2, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
 }
@@ -50,20 +50,23 @@ void loop() {
     if(readDataToStruct(&data))
     {
       // Debug
-      Serial.println(data.p1);
-      Serial.println(data.p2);
-      Serial.println(data.p3);
-      Serial.println(data.p4);
-      Serial.println(data.p5);
-      Serial.println(data.p6);
+      //Serial.println(data.p1);
+      //Serial.println(data.p2);
+      //Serial.println(data.p3);
+      //Serial.println(data.p4);
+      //Serial.println(data.p5);
+      //Serial.println(data.p6);
       //Serial.println(data.end);
+      //byte* serializedMessage = (byte*)&data, sizeof(data);
+      //Serial.println(serializedMessage);
+      Serial.write((byte*)&data, sizeof(data));
 
       // TODO: Call move motor functinons
       moveMotor(id1, data.p1);
     }
     else
     {
-      Serial.println("Failed to parse message");
+      //Serial.println("Failed to parse message");
     }
   }
 }
