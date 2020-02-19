@@ -15,16 +15,156 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Hello World</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+    <item row="0" column="1">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tab_mot">
+       <attribute name="title">
+        <string>Motor control</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="label_mot1">
+          <property name="text">
+           <string>Motor 1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot1">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot2">
+          <property name="text">
+           <string>Motor 2</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot3">
+          <property name="text">
+           <string>Motor 3</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot4">
+          <property name="text">
+           <string>Motor 4</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot5">
+          <property name="text">
+           <string>Motor 5</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mot6">
+          <property name="text">
+           <string>Motor 6</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="slider_mot6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="calibrateVerticalAxisButton">
+          <property name="text">
+           <string>Calibrate vertical axis</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_sequences">
+       <property name="cursor">
+        <cursorShape>ArrowCursor</cursorShape>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
+       <attribute name="title">
+        <string>Sequences</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QPushButton" name="newSequence">
+          <property name="text">
+           <string>Create new sequence</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="listOfSequences">
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DragOnly</enum>
+          </property>
+          <property name="defaultDropAction">
+           <enum>Qt::MoveAction</enum>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="movement">
+           <enum>QListView::Free</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -34,7 +174,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
