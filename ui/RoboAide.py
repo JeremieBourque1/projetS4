@@ -41,39 +41,43 @@ structDefinition = '6Hc'
 s = struct.Struct(structDefinition)
 messageSize = struct.calcsize(structDefinition)
 
+
 def initSerialConnection(port):
     """
     Initialize serial communication with a specified port
-    :param port: port name
-    :return: serial communication object
+    :param port: serial port name
+    :return: serial object and bool indicating if connection was successful
     """
     try:
         ser = serial.Serial(port, 9600, timeout=0.1)
         print("Connected to %s" % port)
-        return ser
+        connected = True
     except serial.serialutil.SerialException:
         print("Failed to connect to %s." % port)
+        ser = None
+        connected = False
+    return ser, connected
+
 
 class MessageReception(QThread):
     """
     Class for a thread that handles incoming serial messages
     """
-    def __init__(self):
+    def __init__(self, mainWindow):
         super(MessageReception, self).__init__()
+        self.mainWindow = mainWindow
         self.shouldRun = True;
         self.counter = 0
+
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
             time.sleep(0)  # TODO: this significantly improves performance. Why?
-            try:  # TODO: remove try except
-                message = comm.read(messageSize+1)  # TODO: Find out why an extra bit is received
-                if len(message) != 0:
-                    print(str(self.counter) + ": ", end='')
-                    print(s.unpack(message[:-1]))  # Unpack message while excluding the extra bit
-                    self.counter += 1
-            except (AttributeError, NameError) as e:
-                pass
+            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra bit is received
+            if len(message) != 0:
+                print(str(self.counter) + ": ", end='')
+                print(s.unpack(message[:-1]))  # Unpack message while excluding the extra bit
+                self.counter += 1
 
 class ListOfSequencesHandler:
     """
@@ -427,9 +431,12 @@ class MainWindow(QMainWindow):
         self.setIcon()
 
         # Serial communication
-        ## Message reception QThread object
-        self.msgReception = MessageReception()
-        self.msgReception.start()
+        self.comm, self.serialConnected = initSerialConnection(commPort)
+
+        if self.serialConnected:
+            ## Message reception QThread object
+            self.msgReception = MessageReception(self)
+            self.msgReception.start()
 
         # ---------------
         ## Dictionnary of all motor objects
@@ -491,18 +498,18 @@ def sendMessage(mainWindow):
     :param mainWindow: mainWindow object
     :return: None
     """
-    values = (mainWindow.dictMot["motor1"].getPosition(),
-              mainWindow.dictMot["motor2"].getPosition(),
-              mainWindow.dictMot["motor3"].getPosition(),
-              mainWindow.dictMot["motor4"].getPosition(),
-              mainWindow.dictMot["motor5"].getPosition(),
-              mainWindow.dictMot["motor6"].getPosition(),
-              b'\0')
-    packed_data = s.pack(*values)
-    try:
-        comm.write(packed_data)
-    except (AttributeError, NameError) as e:
-        print("Error sending message")
+    if mainWindow.serialConnected:
+        values = (mainWindow.dictMot["motor1"].getPosition(),
+                  mainWindow.dictMot["motor2"].getPosition(),
+                  mainWindow.dictMot["motor3"].getPosition(),
+                  mainWindow.dictMot["motor4"].getPosition(),
+                  mainWindow.dictMot["motor5"].getPosition(),
+                  mainWindow.dictMot["motor6"].getPosition(),
+                  b'\0')
+        packed_data = s.pack(*values)
+        mainWindow.comm.write(packed_data)
+    else:
+        print("Error sending message, serial not connected")
 
 
 def calibrateVerticalAxis():
@@ -515,7 +522,6 @@ def calibrateVerticalAxis():
 
 
 if __name__ == "__main__":
-    comm = initSerialConnection(commPort)
     app = QApplication(sys.argv)
     window = MainWindow()
     app.exec_()

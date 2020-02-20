@@ -17,6 +17,7 @@ os.chdir("..")
 
 class TestMove(unittest.TestCase):
     def setUp(self):
+        self.testComm, serialConnected = RoboAide.initSerialConnection(RoboAide.commPort)
         self.testWindow = RoboAide.MainWindow()
         self.testMove = RoboAide.Move(self.testWindow.dictMot)
 
