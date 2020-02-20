@@ -15,7 +15,9 @@ RoboAide is a project to improve a DIY robotic arm used for mobility assistance.
 ## Dependencies
 * PySide2
 * PySerial
-* OpenCR board support for Arduino IDE
+* OpenCR board support for Arduino IDE  
+  
+Install dependencies with `pip install -r requirements.txt`
 
 ## Documentation
 https://jeremiebourque1.github.io/projetS4/

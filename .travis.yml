@@ -24,8 +24,8 @@ addons:
 
 # Build your code e.g. by calling make
 script:
-  - doxygen Doxyfile
   - python -m unittest discover
+  - doxygen Doxyfile
 
 # Generate and deploy documentation
 deploy:

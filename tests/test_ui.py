@@ -13,7 +13,7 @@ from PySide2.QtCore import Qt
 app = QApplication(sys.argv)
 
 # Change directory to be able to load the .ui
-os.chdir("..")
+os.chdir("ui")
 
 class TestMove(unittest.TestCase):
     def setUp(self):
