@@ -316,14 +316,16 @@ class moveLabel(QListWidgetItem):
         :param parent: The Qt parent
         """
         QListWidgetItem.__init__(self, parent)
+        ## The move for the label
         self.__move = move
+        ## The dictionary of all the motors
         self.__motors = motors
         self.setText(text)
 
     def doubleClickEvent(self):
         """
         Handles the event when the move lable is double clicked
-        :return:
+        :return: No return
         """
         # TODO: make the motors move to their respective positions
         for motor in self.__motors:
@@ -333,49 +335,85 @@ class moveLabel(QListWidgetItem):
 # Class for a sequence of moves
 class Sequence(QListWidgetItem):
     """
-
+    Sequence is a series of moves that will be executed in a specific order
     """
     def __init__(self,motors = {}, name=""):
         QListWidgetItem.__init__(self)
         # QListWidgetItem method for setting the text of the item
         self.setText(name)
+        ## A list of moves
         self.__moves = []
+        ## The name of the sequence
         self.__name = name
+        ## A dictionary of all the motors
         self.__motors = motors
 
     def setName(self, name):
+        """
+        Sets the name of the sequence
+        :param name: The name
+        :return: No return
+        """
         self.setText(name)
         self.__name = name
 
     def getName(self):
+        """
+        Accesor for the sequence name
+        :return: The name of the sequence
+        """
         return self.__name
 
     def addMove(self, newMove):
+        """
+        Adds a move to the list in the sequence
+        :param newMove: The move to add to the list
+        :return: No return
+        """
         self.__moves.append(newMove)
 
     def getNumberofMoves(self):
+        """
+        :return: The number of moves in the sequence
+        """
         return str(len(self.__moves))
 
 
 # Class for a move of a sequence
 class Move:
+    """
+    A move contains all the position of all the motors for a specific point in space
+    """
     def __init__(self, motors = {}):
+        ## A dictionary of all motors
         self.__motors = motors
-
-        # To store the different positions of the move
+        ## To store the different positions of the move
         self.__movePositions = dict()
         # Initialize move positions to an invalid position (-1)
         for motor in self.__motors:
             self.__movePositions[motor] = -1
 
     def setMotorPosition(self, motorName, position):
+        """
+        Setter of the position of a motor in the move
+        :param motorName: The name of the motor we want to set the positio
+        :param position: The position of the motor
+        :return: Return None if succesful and an error string if not
+        """
+        #TODO: call setPosition when the slider moves and not when next move is clicked
         if motorName in self.__motors:
             self.__motors[motorName].setPosition(position)
             self.__movePositions[motorName] = position
+            return None
         else:
             return "There's no motor named that way"
 
     def getMotorPosition(self, motorName):
+        """
+        Accessor for the positions in the move
+        :param motorName: The name of the motor
+        :return: Return the position if succesful and an error string if not
+        """
         if motorName in self.__movePositions:
             return self.__movePositions[motorName]
         else:
@@ -384,30 +422,71 @@ class Move:
 
 # Class for a motor and its characteristics
 class Motor:
+    """
+    Class for a motor which has a position, a name and a status
+    """
     def __init__(self, mainWindow = None, name="", pos = 0, status = False):
+        """
+        Initialization
+        :param mainWindow: The main window of the ui
+        :param name: The name of the motor
+        :param pos: The position of the motor
+        :param status: the status of the motor
+        """
+        ## The main window of the ui
         self.__name = name
+        ## The position of the motor
         self.__position = pos
+        ## The status of the motor
         self.__status = status
+        ## The main window of the ui
         self.__window = mainWindow
 
     def setPosition(self, pos):
+        """
+        Setter of the positon
+        :param pos: the position
+        :return: No return
+        """
         self.__position=pos
         print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
     def getPosition(self):
+        """
+        Accessor of the position
+        :return: The position of the motor
+        """
         return self.__position
 
     def setName(self, name):
+        """
+        Setter of the name of the motor
+        :param name: The name of the motor
+        :return: No return
+        """
         self.__name = name
 
     def getName(self):
+        """
+        Accessor of the name
+        :return: The name of the motor
+        """
         return self.__name
 
     def setStatus(self, status):
+        """
+        Setter of the status of the motor
+        :param status: The status
+        :return: No return
+        """
         self.__status = status
 
     def isEnabled(self):
+        """
+        Accessor of the status
+        :return: The status
+        """
         return self.__status
 
 
