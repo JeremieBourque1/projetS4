@@ -12,8 +12,6 @@ from PySide2.QtCore import Qt
 # Start a Qt App to create a window
 app = QApplication(sys.argv)
 
-# Change directory to be able to load the .ui
-os.chdir("ui")
 
 class TestMove(unittest.TestCase):
     def setUp(self):

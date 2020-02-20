@@ -16,12 +16,16 @@ import warnings
 import struct
 import serial
 import time
+import os
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
 # Implicit conversion to integers using __int__ is deprecated, and may be removed in a future version of Python.
 # self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
+
+# Change working directory to this script's directory to easily access mainwindow.ui
+os.chdir(os.path.dirname(__file__))
 
 ## App icon
 icon = 'icon.png'
