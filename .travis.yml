@@ -9,7 +9,9 @@ virtualenv:
     system_site_package: true
 
 before_install:
-  - pip install -r requirements.txt
+  - python --version
+  - pip install -U pip
+  - pip install -U -r requirements.txt
 
 # Blacklist
 branches:
@@ -24,7 +26,7 @@ addons:
 
 # Build your code e.g. by calling make
 script:
-  - python -m unittest discover
+  - python3 -m unittest discover
   - doxygen Doxyfile
 
 # Generate and deploy documentation
