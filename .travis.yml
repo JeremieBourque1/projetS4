@@ -1,5 +1,15 @@
 # This will run on Travis' 'new' container-based infrastructure
+language: python
 sudo: false 
+
+python:
+  - 3.7
+
+virtualenv:
+    system_site_package: true
+
+before_install:
+  - pip install -r requirements.txt
 
 # Blacklist
 branches:
@@ -15,6 +25,7 @@ addons:
 # Build your code e.g. by calling make
 script:
   - doxygen Doxyfile
+  - python -m unittest discover
 
 # Generate and deploy documentation
 deploy:

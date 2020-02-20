@@ -9,7 +9,8 @@ RoboAide is a project to improve a DIY robotic arm used for mobility assistance.
 1. Install all dependencies
 2. Plug in the OpenCR board to the pc via USB and find the the right communication port
 3. Upload the Arduino code
-3. Run RoboAide.py with python to launch the GUI application
+4. In RoboAide.py, change the value of `commPort` to the name of your board's port
+5. Run RoboAide.py with python to launch the GUI application
 
 ## Dependencies
 * PySide2
