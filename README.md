@@ -1,5 +1,7 @@
 # RoboAide
 
+[![Build Status](https://travis-ci.com/JeremieBourque1/projetS4.svg?branch=master)](https://travis-ci.com/JeremieBourque1/projetS4)
+
 ## Description
 RoboAide is a project to improve a DIY robotic arm used for mobility assistance. This repository contains code for a GUI application as well as Arduino code for the control of the arm's motors. The application is made in Python using PySide2 and communicates the desired motor positions via USB serial communication with the Arduio/OpenCR board.
 
@@ -13,3 +15,6 @@ RoboAide is a project to improve a DIY robotic arm used for mobility assistance.
 * PySide2
 * PySerial
 * OpenCR board support for Arduino IDE
+
+## Documentation
+https://jeremiebourque1.github.io/projetS4/
