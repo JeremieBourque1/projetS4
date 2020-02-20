@@ -1,5 +1,9 @@
 # This will run on Travis' 'new' container-based infrastructure
 language: python
+dist: xenial   # required for Python >= 3.7
+services:
+  - xvfb
+
 sudo: false 
 
 python:
@@ -9,6 +13,7 @@ virtualenv:
     system_site_package: true
 
 before_install:
+  - pwd
   - python --version
   - pip install -U pip
   - pip install -U -r requirements.txt
@@ -22,6 +27,8 @@ branches:
 addons:
   apt:
     packages:
+      - x11-utils
+      - libxkbcommon-x11-0
       - doxygen
 
 # Build your code e.g. by calling make
