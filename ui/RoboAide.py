@@ -106,14 +106,6 @@ class ListOfSequencesHandler:
         # Connect the qwidgetlist to the custom right click menu
         self.__listOfSequences.customContextMenuRequested.connect(self.showMenu)
 
-        # Put the sliders of the create sequence window in a list
-        ## List of sliders in the create sequence window
-        self.listOfSliders = []
-        for motor in motors:
-            slider = QSlider()
-            slider.setOrientation(Qt.Horizontal)
-            self.listOfSliders.append(slider)
-
     def addItem(self, item):
         """
         Add an item to the list of sequence
@@ -195,15 +187,35 @@ class CreateSequenceWindow(QDialog):
         ## The list of the different moves that forms the sequence
         self.__listOfMoves = QListWidget()
 
+        # Put the sliders of the create sequence window in a list
+        ## List of sliders in the create sequence window
+        self.listOfSliders = []
+        for motor in self.__motors:
+            slider = QSlider()
+            slider.setOrientation(Qt.Horizontal)
+            slider.valueChanged.connect(
+                lambda: self.__motors[motor].setPosition(slider.value()))
+            self.listOfSliders.append(slider)
+
         ## Message to make the user put a name to the sequence
         self.__noNameMessage = QMessageBox()
-        self.__noNameMessage.setText("Your sequence doesn't have a name by clicking the ok button "
-                                     "it will not be saved")
-        self.__noNameMessage.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        # Close the create sequence window and the message
-        self.__noNameMessage.accepted.connect(self.reject)
+        self.__noNameMessage.setIcon(QMessageBox.Warning)
+        self.__noNameMessage.setWindowIcon(appIcon)
+        self.__noNameMessage.setText("Please name your sequence before saving it")
+        self.__noNameMessage.setStandardButtons(QMessageBox.Ok)
         # Renable the create sequence window and closes the message
-        self.__noNameMessage.rejected.connect(self.enableWindow)
+        self.__noNameMessage.accepted.connect(self.enableWindow)
+
+        ## Warning message to make sure the user doen't want to save the sequence
+        self.__warningMessage = QMessageBox()
+        self.__warningMessage.setIcon(QMessageBox.Warning)
+        self.__warningMessage.setWindowIcon(appIcon)
+        self.__warningMessage.setText("Are you sure you want to close this window? Your sequence will not be saved")
+        self.__warningMessage.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        # Close the create sequence window and the message
+        self.__warningMessage.accepted.connect(self.reject)
+        # Renable the create sequence window and closes the message
+        self.__warningMessage.rejected.connect(self.enableWindow)
 
         # Set the text for the labels
         ## Labels for the motors in the UI
@@ -220,7 +232,7 @@ class CreateSequenceWindow(QDialog):
         # If ok pressed add the sequence to the list
         self.buttonBox.accepted.connect(self.addItem)
         # If cancel pressed close the create sequence window
-        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.rejected.connect(self.__warningMessage.exec)
 
         # Renable the main window when the create sequence closes
         self.rejected.connect(self.__listOfSequenceHandler.enableUi)
@@ -237,7 +249,7 @@ class CreateSequenceWindow(QDialog):
         self.__layout.addWidget(self.__listOfMoves)
         for motorNumber in range(len(self.__motors)):
             self.__layout.addWidget(self.__motorLabels[motorNumber])
-            self.__layout.addWidget(self.__listOfSequenceHandler.listOfSliders[motorNumber])
+            self.__layout.addWidget(self.listOfSliders[motorNumber])
         self.__layout.addWidget(self.nextMoveButton)
         self.__layout.addWidget(self.buttonBox)
 
@@ -271,7 +283,7 @@ class CreateSequenceWindow(QDialog):
         move = Move(self.__motors)
         i = 0
         for motorName in self.__motors:
-            move.setMotorPosition(motorName, self.__listOfSequenceHandler.listOfSliders[i].value())
+            move.setMotorPosition(motorName, self.listOfSliders[i].value())
             i += 1
         self.__sequence.addMove(move)
 
@@ -280,7 +292,7 @@ class CreateSequenceWindow(QDialog):
         i = 0
         for motor in self.__motors:
             labelText += self.__motors[motor].getName() + " " +\
-                         str(self.__listOfSequenceHandler.listOfSliders[i].value()) + ", "
+                         str(self.listOfSliders[i].value()) + ", "
             i += 1
         label = moveLabel(move,labelText,self.__motors)
 
@@ -402,7 +414,7 @@ class Move:
         """
         #TODO: call setPosition when the slider moves and not when next move is clicked
         if motorName in self.__motors:
-            self.__motors[motorName].setPosition(position)
+            #self.__motors[motorName].setPosition(position)
             self.__movePositions[motorName] = position
             return None
         else:
@@ -531,12 +543,18 @@ class MainWindow(QMainWindow):
         self.initializeSliderPositions()
 
         # Connect the slider signals
-        self.ui.slider_mot1.valueChanged.connect(lambda: self.dictMot["motor1"].setPosition(self.ui.slider_mot1.value()))
-        self.ui.slider_mot2.valueChanged.connect(lambda: self.dictMot["motor2"].setPosition(self.ui.slider_mot2.value()))
-        self.ui.slider_mot3.valueChanged.connect(lambda: self.dictMot["motor3"].setPosition(self.ui.slider_mot3.value()))
-        self.ui.slider_mot4.valueChanged.connect(lambda: self.dictMot["motor4"].setPosition(self.ui.slider_mot4.value()))
-        self.ui.slider_mot5.valueChanged.connect(lambda: self.dictMot["motor5"].setPosition(self.ui.slider_mot5.value()))
-        self.ui.slider_mot6.valueChanged.connect(lambda: self.dictMot["motor6"].setPosition(self.ui.slider_mot6.value()))
+        self.ui.slider_mot1.valueChanged.connect(
+            lambda: self.dictMot["motor1"].setPosition(self.ui.slider_mot1.value()))
+        self.ui.slider_mot2.valueChanged.connect(
+            lambda: self.dictMot["motor2"].setPosition(self.ui.slider_mot2.value()))
+        self.ui.slider_mot3.valueChanged.connect(
+            lambda: self.dictMot["motor3"].setPosition(self.ui.slider_mot3.value()))
+        self.ui.slider_mot4.valueChanged.connect(
+            lambda: self.dictMot["motor4"].setPosition(self.ui.slider_mot4.value()))
+        self.ui.slider_mot5.valueChanged.connect(
+            lambda: self.dictMot["motor5"].setPosition(self.ui.slider_mot5.value()))
+        self.ui.slider_mot6.valueChanged.connect(
+            lambda: self.dictMot["motor6"].setPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
