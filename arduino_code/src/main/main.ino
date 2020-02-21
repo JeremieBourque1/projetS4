@@ -23,6 +23,7 @@ struct dataPack {
 // Function prototypes
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
+void sendMessage(dataPack message);
 bool initDynamixel(uint8_t id);
 bool setJointMode(uint8_t id);
 void moveMotor(uint8_t id, int32_t pos);
@@ -59,7 +60,7 @@ void loop() {
       //Serial.println(data.end);
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
-      Serial.write((byte*)&data, sizeof(data));
+      void sendMessage(dataPack data);
 
       // TODO: Call move motor functinons
       moveMotor(id1, data.p1);
@@ -113,6 +114,12 @@ bool readDataToStruct(dataPack *data)
   return true;
 }
 
+// Send dataPack over serial
+void sendMessage(dataPack message)
+{
+  Serial.write((byte*)&message, sizeof(message));
+}
+
 //Checks the sensor's state and the motor direction. If motor is moving toward sensor and the sensor is FALSE
 // , it sends TRUE. If motor is moving away from sensor and sensor is FALSE, it sends FALSE.
 bool shouldSlowDown(int motorDirection)
@@ -151,7 +158,7 @@ bool shouldSlowDown(int motorDirection)
 
 bool runAxialCalibration(int motorDirection,int* motor)
 {
-    if (shouldSlowDown(motorDirection) == true) //    #TODO: Add a setSpeed() function?
+    if (shouldSlowDown(motorDirection) == true) //    //TODO: Add a setSpeed() function?
     {
         if (setAxialMotorDirection(-1, motor) == true)
         {

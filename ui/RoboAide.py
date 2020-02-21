@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import QRect, Qt, QThread, Signal, QMutex
+from PySide2.QtCore import QRect, Qt, QThread, QMutex
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -73,10 +73,9 @@ class MessageReception(QThread):
     def __init__(self, mainWindow):
         super(MessageReception, self).__init__()
         self.mainWindow = mainWindow
-        self.shouldRun = True;
+        self.shouldRun = True
         self.counter = 0
         self.firstMessage = True
-        self.sig = Signal('msg')
 
     def run(self):
         print("Message Reception thread started")
@@ -511,8 +510,9 @@ class Motor:
         :return: The current position of the motor
         """
         self.mu.lock()
-        return self.__currentPosition
+        pos = self.__currentPosition
         self.mu.unlock()
+        return pos
 
     def setName(self, name):
         """
