@@ -39,7 +39,7 @@ class TestMotor(unittest.TestCase):
         self.testMotor = RoboAide.Motor(self.testWindow, "testMotor", 500, True)
 
     def test_get_position(self):
-        self.assertEqual(self.testMotor.getPosition(),500)
+        self.assertEqual(self.testMotor.getGoalPosition(), 500)
 
     def test_is_enabled(self):
         self.assertTrue(self.testMotor.isEnabled(),"Motor is not enabled")

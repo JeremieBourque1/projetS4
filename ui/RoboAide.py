@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon
-from PySide2.QtCore import QRect, Qt, QThread, Signal
+from PySide2.QtCore import QRect, Qt, QThread, Signal, QMutex
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -33,6 +33,9 @@ icon = 'icon.png'
 ## Serial communication port
 commPort = 'COM3'
 # TODO: port should be chosen in the gui
+
+## Robotic arm's number of motors
+numberOfMotors = 6
 
 # Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
 # Ignore the part with the py_filter.py!!
@@ -72,16 +75,29 @@ class MessageReception(QThread):
         self.mainWindow = mainWindow
         self.shouldRun = True;
         self.counter = 0
+        self.firstMessage = True
+        self.sig = Signal('msg')
 
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
             time.sleep(0)  # TODO: this significantly improves performance. Why?
-            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra bit is received
-            if len(message) != 0:
+            message = self.mainWindow.comm.read(messageSize)  # TODO: Find out why an extra bit is received (only happens with openCr)
+            if len(message) == 13:
+                unpacked_msg = s.unpack(message)  # Unpack message
                 print(str(self.counter) + ": ", end='')
-                print(s.unpack(message[:-1]))  # Unpack message while excluding the extra bit
+                print(unpacked_msg)
                 self.counter += 1
+                self.setMotorCurrentPosition(unpacked_msg)
+
+    def setMotorCurrentPosition(self, msg):
+        for i in range(numberOfMotors):
+            if 0 <= msg[i] < 100:
+                self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
+        if self.firstMessage:
+            self.mainWindow.initializeSliderPositions()
+            self.firstMessage = False
+
 
 class ListOfSequencesHandler:
     """
@@ -159,6 +175,7 @@ class ListOfSequencesHandler:
         """
         self.__ui.setEnabled(True)
 
+
 class CreateSequenceWindow(QDialog):
     """
     Window for creating a new sequence
@@ -198,7 +215,7 @@ class CreateSequenceWindow(QDialog):
             slider = QSlider()
             slider.setOrientation(Qt.Horizontal)
             slider.valueChanged.connect(
-                lambda: self.__motors[motor].setPosition(slider.value()))
+                lambda: self.__motors[motor].setGoalPosition(slider.value()))
             self.listOfSliders.append(slider)
 
         ## Message to make the user put a name to the sequence
@@ -318,6 +335,7 @@ class CreateSequenceWindow(QDialog):
         :return:
         """
         self.setEnabled(True)
+
 
 class moveLabel(QListWidgetItem):
     """
@@ -441,7 +459,7 @@ class Motor:
     """
     Class for a motor which has a position, a name and a status
     """
-    def __init__(self, mainWindow = None, name="", pos = 0, status = False):
+    def __init__(self, mainWindow=None, name="", goalPosition=0, status=False):
         """
         Initialization
         :param mainWindow: The main window of the ui
@@ -451,29 +469,50 @@ class Motor:
         """
         ## The main window of the ui
         self.__name = name
-        ## The position of the motor
-        self.__position = pos
+        ## The goal position of the motor
+        self.__goalPosition = goalPosition
+        ## The current position of the motor
+        self.__currentPosition = 0
         ## The status of the motor
         self.__status = status
         ## The main window of the ui
         self.__window = mainWindow
+        self.mu = QMutex()
 
-    def setPosition(self, pos):
+    def setGoalPosition(self, pos):
         """
-        Setter of the positon
+        Setter of the goal positon
         :param pos: the position
         :return: No return
         """
-        self.__position=pos
+        self.__goalPosition=pos
         print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
-    def getPosition(self):
+    def getGoalPosition(self):
         """
-        Accessor of the position
-        :return: The position of the motor
+        Accessor of the goal position
+        :return: The goal position of the motor
         """
-        return self.__position
+        return self.__goalPosition
+
+    def setCurrentPosition(self, pos):
+        """
+        Setter of the current position
+        :return: No return
+        """
+        self.mu.lock()
+        self.__currentPosition = pos
+        self.mu.unlock()
+
+    def getCurrentPosition(self):
+        """
+        Accessor of the current position
+        :return: The current position of the motor
+        """
+        self.mu.lock()
+        return self.__currentPosition
+        self.mu.unlock()
 
     def setName(self, name):
         """
@@ -536,29 +575,28 @@ class MainWindow(QMainWindow):
         # ---------------
         ## Dictionnary of all motor objects
         self.dictMot = dict()
-        for i in range(1, 7):
-            mot = Motor(self,"motor" + str(i))
+        for i in range(1, numberOfMotors+1):
+            mot = Motor(self, "motor" + str(i))
             self.dictMot[mot.getName()] = mot
         # ---------------
 
         ## ListOfSequencesHandler object
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
 
-        self.initializeSliderPositions()
 
         # Connect the slider signals
         self.ui.slider_mot1.valueChanged.connect(
-            lambda: self.dictMot["motor1"].setPosition(self.ui.slider_mot1.value()))
+            lambda: self.dictMot["motor1"].setGoalPosition(self.ui.slider_mot1.value()))
         self.ui.slider_mot2.valueChanged.connect(
-            lambda: self.dictMot["motor2"].setPosition(self.ui.slider_mot2.value()))
+            lambda: self.dictMot["motor2"].setGoalPosition(self.ui.slider_mot2.value()))
         self.ui.slider_mot3.valueChanged.connect(
-            lambda: self.dictMot["motor3"].setPosition(self.ui.slider_mot3.value()))
+            lambda: self.dictMot["motor3"].setGoalPosition(self.ui.slider_mot3.value()))
         self.ui.slider_mot4.valueChanged.connect(
-            lambda: self.dictMot["motor4"].setPosition(self.ui.slider_mot4.value()))
+            lambda: self.dictMot["motor4"].setGoalPosition(self.ui.slider_mot4.value()))
         self.ui.slider_mot5.valueChanged.connect(
-            lambda: self.dictMot["motor5"].setPosition(self.ui.slider_mot5.value()))
+            lambda: self.dictMot["motor5"].setGoalPosition(self.ui.slider_mot5.value()))
         self.ui.slider_mot6.valueChanged.connect(
-            lambda: self.dictMot["motor6"].setPosition(self.ui.slider_mot6.value()))
+            lambda: self.dictMot["motor6"].setGoalPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
@@ -571,25 +609,19 @@ class MainWindow(QMainWindow):
         appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
-    # Sets the slider position to the each motors initial position
     def initializeSliderPositions(self):
         """
         Initialize motor slider positions
         :return: None
         """
+        print("Initializing motor slider positions")
         # TODO: get the position value for each motor
-        mot1 = 0
-        mot2 = 0
-        mot3 = 0
-        mot4 = 0
-        mot5 = 0
-        mot6 = 0
-        self.ui.slider_mot1.setValue(mot1)
-        self.ui.slider_mot2.setValue(mot2)
-        self.ui.slider_mot3.setValue(mot3)
-        self.ui.slider_mot4.setValue(mot4)
-        self.ui.slider_mot5.setValue(mot5)
-        self.ui.slider_mot6.setValue(mot6)
+        self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
+        self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
+        self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
+        self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
+        self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
+        self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
 
 
 # Send message to Arduino containing all motor values
@@ -600,12 +632,12 @@ def sendMessage(mainWindow):
     :return: None
     """
     if mainWindow.serialConnected:
-        values = (mainWindow.dictMot["motor1"].getPosition(),
-                  mainWindow.dictMot["motor2"].getPosition(),
-                  mainWindow.dictMot["motor3"].getPosition(),
-                  mainWindow.dictMot["motor4"].getPosition(),
-                  mainWindow.dictMot["motor5"].getPosition(),
-                  mainWindow.dictMot["motor6"].getPosition(),
+        values = (mainWindow.dictMot["motor1"].getGoalPosition(),
+                  mainWindow.dictMot["motor2"].getGoalPosition(),
+                  mainWindow.dictMot["motor3"].getGoalPosition(),
+                  mainWindow.dictMot["motor4"].getGoalPosition(),
+                  mainWindow.dictMot["motor5"].getGoalPosition(),
+                  mainWindow.dictMot["motor6"].getGoalPosition(),
                   b'\0')
         packed_data = s.pack(*values)
         mainWindow.comm.write(packed_data)
