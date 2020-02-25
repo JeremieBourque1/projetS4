@@ -30,9 +30,8 @@ os.chdir(os.path.dirname(__file__))
 
 ## App icon
 icon = 'icon.png'
-
 ## Serial communication port
-commPort = 'COM3'
+commPort = 'COM4'
 # TODO: port should be chosen in the gui
 
 ## Robotic arm's number of motors
@@ -102,10 +101,10 @@ class MessageReception(QThread):
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
-            time.sleep(0)  # TODO: this significantly improves performance. Why?
-            message = self.mainWindow.comm.read(messageSize)  # TODO: Find out why an extra bit is received (only happens with openCr)
-            if len(message) == 13:
-                unpacked_msg = s.unpack(message)  # Unpack message
+            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra bit is received (only happens with openCr)
+            if len(message) == messageSize+1:
+                print("message received")
+                unpacked_msg = s.unpack(message[:-1])  # Unpack message
                 print(str(self.counter) + ": ", end='')
                 print(unpacked_msg)
                 self.counter += 1
@@ -113,8 +112,7 @@ class MessageReception(QThread):
 
     def setMotorCurrentPosition(self, msg):
         for i in range(numberOfMotors):
-            if 0 <= msg[i] < 100:
-                self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
+            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
         if self.firstMessage:
             self.mainWindow.initializeSliderPositions()
             self.firstMessage = False
@@ -518,7 +516,7 @@ class Motor:
     """
     Class for a motor which has a position, a name and a status
     """
-    def __init__(self, mainWindow=None, name="", goalPosition=0, status=False):
+    def __init__(self, mainWindow=None, name="", goalPosition=0, gearRatio=1, status=False):
         """
         Initialization
         :param mainWindow: The main window of the ui
@@ -532,6 +530,8 @@ class Motor:
         self.__goalPosition = goalPosition
         ## The current position of the motor
         self.__currentPosition = 0
+        ## Gear ratio for the motor's joint
+        self.__gearRatio = gearRatio
         ## The status of the motor
         self.__status = status
         ## The main window of the ui
@@ -544,7 +544,7 @@ class Motor:
         :param pos: the position
         :return: No return
         """
-        self.__goalPosition=pos
+        self.__goalPosition=self.__gearRatio*pos
         print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
@@ -640,13 +640,13 @@ class MainWindow(QMainWindow):
             self.dictMot[mot.getName()] = mot
         # ---------------
 
+        self.initializeSliderPositions()
+
         ## ListOfSequencesHandler object
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
 
         # load the last save
         loadSequences(self.__listOfSenquenceHandler,self.dictMot)
-
-        self.initializeSliderPositions()
 
         # Connect the slider signals
         self.ui.slider_mot1.valueChanged.connect(
@@ -686,6 +686,7 @@ class MainWindow(QMainWindow):
         self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
         self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
         self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
+        print("Finished initializing slider positions")
 
 
 # Send message to Arduino containing all motor values

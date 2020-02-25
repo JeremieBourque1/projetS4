@@ -5,46 +5,60 @@
 // Declare constants
 const int MESSAGE_SIZE = 13;
 char endOfMessageChar = '\0';
-const int id1 = 221;
+const int id3 = 221;
+const int id1 = 222;
+const int id2= 223;
+Dynamixel mot1(id1, 28);
+Dynamixel mot2(id2, 40);
+Dynamixel mot3(id3, 20);
 
 
-// Struct of the data received and sent
+/**
+ * \struct dataPack
+ * \brief A structure containing message data
+ */
 struct dataPack {
-  uint16_t p1;  // Motor 1 position
-  uint16_t p2;  // Motor 2 position
-  uint16_t p3;  // Motor 3 position
-  uint16_t p4;  // Motor 4 position
-  uint16_t p5;  // Motor 5 position 
-  uint16_t p6;  // Motor 6 position 
-  char end;    // End of message character
+  //! Motor 1 position
+  uint16_t p1;
+  //! Motor 2 position
+  uint16_t p2;
+  //! Motor 3 position
+  uint16_t p3;
+  //! Motor 4 position
+  uint16_t p4;
+  //! Motor 5 position
+  uint16_t p5;
+  //! Motor 6 position
+  uint16_t p6;
+  //! End of message character
+  char last;
 };
 
 // Function prototypes
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
-bool initDynamixel(uint8_t id);
-bool setJointMode(uint8_t id);
-void moveMotor(uint8_t id, int32_t pos);
 bool shouldSlowDown(int motorDirection);
 bool runAxialCalibration(int motorDirection,int* motor);
 bool setAxialMotorDirection(int directionValue, int* motor);
 bool checkAxialMotorDirection(int directionValue, int* motor);
-axialMotor axialMotor(-1,51,53);
+//axialMotor axialMotor(-1,51,53);
 
 // Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   while(!Serial);
-  initDynamixel(id1);
-  setJointMode(id1);
-  //Serial.println("Ready");
-  pinMode(axialMotor.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(axialMotor.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  mot1.init();
+  mot2.init();
+  mot3.init();
+  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+  sendMessage(outgoingMessage);
+  //pinMode(axialMotor.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  //pinMode(axialMotor.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
 }
 
 void loop() {
-  
+
   if(Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
@@ -61,10 +75,15 @@ void loop() {
       //Serial.println(data.end);
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
-      void sendMessage(dataPack data);
+
 
       // TODO: Call move motor functinons
-      moveMotor(id1, data.p1);
+      mot1.moveMotor(data.p1);
+      mot2.moveMotor(data.p2);
+      mot3.moveMotor(data.p3);
+
+      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+      sendMessage(outgoingMessage);
     }
     else
     {
@@ -110,7 +129,7 @@ bool readDataToStruct(dataPack *data)
     i++;
   }
   memcpy(data, buf, sizeof(*data));
-  if(data->end != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
+  if(data->last != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
     return false;
     
   return true;
