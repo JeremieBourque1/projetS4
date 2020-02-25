@@ -516,7 +516,7 @@ class Motor:
     """
     Class for a motor which has a position, a name and a status
     """
-    def __init__(self, mainWindow=None, name="", goalPosition=0, gearRatio=1, status=False):
+    def __init__(self, mainWindow=None, name="", goalPosition=0, status=False):
         """
         Initialization
         :param mainWindow: The main window of the ui
@@ -530,8 +530,6 @@ class Motor:
         self.__goalPosition = goalPosition
         ## The current position of the motor
         self.__currentPosition = 0
-        ## Gear ratio for the motor's joint
-        self.__gearRatio = gearRatio
         ## The status of the motor
         self.__status = status
         ## The main window of the ui
