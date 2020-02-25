@@ -17,6 +17,7 @@ import struct
 import serial
 import time
 import os
+import json
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -65,6 +66,27 @@ def initSerialConnection(port):
         connected = False
     return ser, connected
 
+def loadSequences(listOfSequenceHandler,motors):
+    """
+    To load the saved sequence in the save.json file and put them in the list of sequence
+    :param listOfSequenceHandler: To add the sequences to the list
+    :param motors: the motors of the robotic arm
+    :return: No return
+    """
+    try:
+        with open('save.json') as save:
+            savedListOfSequences = json.load(save)
+        for sequence in savedListOfSequences:
+            for sequenceName in sequence:
+                savedSequence = Sequence(motors,sequenceName)
+                for move in sequence[sequenceName]:
+                    savedMove = Move(motors)
+                    for motor in move:
+                        savedMove.setMotorPosition(motor, move[motor])
+                    savedSequence.addMove(savedMove)
+                listOfSequenceHandler.addItem(savedSequence)
+    except FileNotFoundError:
+        print("Save file not found")
 
 class MessageReception(QThread):
     """
@@ -142,6 +164,19 @@ class ListOfSequencesHandler:
         if not listItems: return
         for item in listItems:
             self.__listOfSequences.takeItem(self.__listOfSequences.row(item))
+            # Load the save file
+            with open('save.json', 'r') as save_file:
+                savedListOfSequences = json.load(save_file)
+            # Search for the sequence that needs to be deleted
+            for sequence in range(len(savedListOfSequences)):
+                for sequenceName in savedListOfSequences[sequence]:
+                    if sequenceName == item.getName():
+                        # Delete the sequence
+                        savedListOfSequences.pop(sequence)
+
+            # Rewrite the save file without the deleted sequence
+            with open('save.json', 'w') as save_file:
+                json.dump(savedListOfSequences, save_file)
 
     def createWindow(self):
         """
@@ -173,7 +208,6 @@ class ListOfSequencesHandler:
         :return: No return
         """
         self.__ui.setEnabled(True)
-
 
 class CreateSequenceWindow(QDialog):
     """
@@ -288,6 +322,27 @@ class CreateSequenceWindow(QDialog):
         """
         if self.__sequence.getName() != "":
             self.__listOfSequenceHandler.addItem(self.__sequence)
+            # Make the sequence json seriable
+            newSequence = dict()
+            newSequence[self.__sequence.getName()] = []
+            for moveNumber in range(len(self.__sequence.getMoves())):
+                newSequence[self.__sequence.getName()].append(
+                    self.__sequence.getMoves()[moveNumber].getMovePositions())
+
+            # Load previously saved sequences
+            try:
+                with open('save.json') as save:
+                    savedListOfSequences = json.load(save)
+            except FileNotFoundError:
+                print("Save file not found")
+                savedListOfSequences = []
+            # Append new sequence to the old ones
+            savedListOfSequences.append(newSequence)
+
+            # Write the sequences to the file
+            with open('save.json', 'w') as outfile:
+                json.dump(savedListOfSequences, outfile)
+
             self.accept()
         else:
             self.setEnabled(False)
@@ -334,7 +389,6 @@ class CreateSequenceWindow(QDialog):
         :return:
         """
         self.setEnabled(True)
-
 
 class moveLabel(QListWidgetItem):
     """
@@ -411,6 +465,9 @@ class Sequence(QListWidgetItem):
         """
         return str(len(self.__moves))
 
+    def getMoves(self):
+        return self.__moves
+
 
 # Class for a move of a sequence
 class Move:
@@ -451,6 +508,9 @@ class Move:
             return self.__movePositions[motorName]
         else:
             return "There's no motor named that way"
+
+    def getMovePositions(self):
+        return self.__movePositions
 
 
 # Class for a motor and its characteristics
@@ -583,6 +643,10 @@ class MainWindow(QMainWindow):
         ## ListOfSequencesHandler object
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
 
+        # load the last save
+        loadSequences(self.__listOfSenquenceHandler,self.dictMot)
+
+        self.initializeSliderPositions()
 
         # Connect the slider signals
         self.ui.slider_mot1.valueChanged.connect(
