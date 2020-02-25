@@ -74,9 +74,10 @@ void loop() {
 
 // Functions
 
-// Iterates through message one character at a time until the end character is found and returns a char array of the message.
-// param: message: char*
-// return: message: char* 
+/** \brief Iterates through message one character at a time until the end character is found and returns a char array of the message.
+  * \param message : empty character array
+  * \return message : character array containing message 
+  */
 void readMessage(char *message)
 {
   int count = 0;
@@ -94,10 +95,10 @@ void readMessage(char *message)
 }
 
 
-// Iterates through message one byte at a time until no more bytes are availabe of the buffer is full and adds them to the buffer.
-// param: buf: byte[]
-// return: buf: byte[]
-//         bool : success(true), failed(false)
+/** \brief Iterates through message one byte at a time casts it to a dataPack struct.
+  * \param data : empty dataPack object the message will be written to
+  * \return data : dataPack object containging the unpacked message data
+  */
 bool readDataToStruct(dataPack *data)
 {
   int i = 0;
@@ -114,14 +115,23 @@ bool readDataToStruct(dataPack *data)
   return true;
 }
 
-// Send dataPack over serial
+
+/** \brief Sends an encoded message over serial
+  * \param message : empty dataPack object the message will be written to
+  */
 void sendMessage(dataPack message)
 {
   Serial.write((byte*)&message, sizeof(message));
 }
 
-//Checks the sensor's state and the motor direction. If motor is moving toward sensor and the sensor is FALSE
-// , it sends TRUE. If motor is moving away from sensor and sensor is FALSE, it sends FALSE.
+
+/** \brief Checks to see if the vertical axis motor should slow down
+  * \param motorDirection : integer indicating the direction of the motor 1 = UP, 0 = DOWN
+  * \return bool indicating if the motor should slow down
+  * 
+  * If motor is moving toward sensor and the sensor is FALSE, it returns TRUE.
+  * If motor is moving away from sensor and sensor is FALSE, it returns FALSE.
+  */
 bool shouldSlowDown(int motorDirection)
 {
   proximitySensor1 = digitalRead(2); //defines the input to pin #2. The input is HIGH when nothing is capted
@@ -150,12 +160,16 @@ bool shouldSlowDown(int motorDirection)
 
 }
 
-//goes towards a limit switch to set a travel limit. Returns TRUE if limit is reached, FALSE if error occurs.
-//motorDirection Takes values of (-1 false true). -1 stands for STOP, false to go down, true for going up.
-//This function takes a motor direction and a pointer to the axial motor.
-//THE FUNCTION NEEDS TO IMPLEMENT THE MOTOR CALIBRATION. NOW IT ONLY STOPS THE MOTOR. (15 FEB 2020)
 
-
+/** \brief Executes the calibration of the vertical axis
+  * \param motorDirection : direction in which the calibration will be run
+  * \param motor : motor id
+  * \return bool
+  * 
+  * goes towards a limit switch to set a travel limit. Returns TRUE if limit is reached, FALSE if error occurs.
+  * motorDirection Takes values of (-1 false true). -1 stands for STOP, false to go down, true for going up.
+  * This function takes a motor direction and a pointer to the axial motor.
+  */
 bool runAxialCalibration(int motorDirection,int* motor)
 {
     if (shouldSlowDown(motorDirection) == true) //    //TODO: Add a setSpeed() function?
@@ -173,8 +187,15 @@ bool runAxialCalibration(int motorDirection,int* motor)
 
 }
 
-//Set the axial motor direction to an int value between -1 false and true.-1 stands for STOP, false to go down, true for going up.
-//The function also calls checkAxialMotorDirection() to ensure the motor is at the right direction.
+
+/** \brief Executes the calibration of the vertical axis
+  * \param directionValue : integer representing the direction of the motor
+  * \param motor : motor id
+  * \return bool
+  * 
+  * Set the axial motor direction to an int value between -1 false and true.-1 stands for STOP, false to go down, true for going up.
+  * The function also calls checkAxialMotorDirection() to ensure the motor is at the right direction.
+  */
 bool setAxialMotorDirection(int directionValue, int* motor)
 {
     *motor = directionValue; //Sets the motor value to the new direction value.
@@ -189,7 +210,13 @@ bool setAxialMotorDirection(int directionValue, int* motor)
     }
 }
 
-//Only checks if the motor value is correctly set to the required value.
+
+
+/** \brief Checks if the motor value is correctly set to the required value.
+  * \param directionValue : integer representing the direction of the motor
+  * \param motor : motor id
+  * \return bool
+  */
 bool checkAxialMotorDirection(int directionValue, int* motor)
 {
     if (*motor == directionValue)

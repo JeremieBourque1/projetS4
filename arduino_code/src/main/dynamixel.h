@@ -10,7 +10,11 @@
 DynamixelWorkbench dxl_wb;
 const int BAUDRATE = 57600;
 
-// Initialize Dynamixel servo motor and verify that it is reachable
+
+/** \brief Initialize Dynamixel servo motor and verify that it is reachable
+  * \param id : integer of the dynamixel's id
+  * \return success (bool)
+  */
 bool initDynamixel(uint8_t id)
 {
   const char *log;
@@ -60,6 +64,10 @@ bool initDynamixel(uint8_t id)
 }
 
 
+/** \brief Set a dynamixel in joint mode
+  * \param id : integer of the dynamixel's id
+  * \return success (bool)
+  */
 bool setJointMode(uint8_t id)
 {
   const char *log;
@@ -78,6 +86,11 @@ bool setJointMode(uint8_t id)
   }
 }
 
+
+/** \brief Set the goal position of a dynamixel
+  * \param id : integer of the dynamixel's id
+  * \param pos : integer of the goal position
+  */
 void moveMotor(uint8_t id, int32_t pos)
 {
   dxl_wb.goalPosition(id, pos);
