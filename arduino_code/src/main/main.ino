@@ -1,49 +1,64 @@
 #include <Arduino.h>
 #include "dynamixel.h" 
+#include "axialMotor.h"
 
 // Declare constants
-int proximitySensor1 = 2;
-int proximitySensor2 = 4;
 const int MESSAGE_SIZE = 13;
 char endOfMessageChar = '\0';
-const int id1 = 221;
+const int id3 = 221;
+const int id1 = 222;
+const int id2= 223;
+Dynamixel mot1(id1, 28);
+Dynamixel mot2(id2, 40);
+Dynamixel mot3(id3, 20);
 
 
-// Struct of the data received and sent
+/**
+ * \struct dataPack
+ * \brief A structure containing message data
+ */
 struct dataPack {
-  uint16_t p1;  // Motor 1 position
-  uint16_t p2;  // Motor 2 position
-  uint16_t p3;  // Motor 3 position
-  uint16_t p4;  // Motor 4 position
-  uint16_t p5;  // Motor 5 position 
-  uint16_t p6;  // Motor 6 position 
-  char end;    // End of message character
+  //! Motor 1 position
+  uint16_t p1;
+  //! Motor 2 position
+  uint16_t p2;
+  //! Motor 3 position
+  uint16_t p3;
+  //! Motor 4 position
+  uint16_t p4;
+  //! Motor 5 position
+  uint16_t p5;
+  //! Motor 6 position
+  uint16_t p6;
+  //! End of message character
+  char last;
 };
 
 // Function prototypes
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
-bool initDynamixel(uint8_t id);
-bool setJointMode(uint8_t id);
-void moveMotor(uint8_t id, int32_t pos);
 bool shouldSlowDown(int motorDirection);
 bool runAxialCalibration(int motorDirection,int* motor);
 bool setAxialMotorDirection(int directionValue, int* motor);
 bool checkAxialMotorDirection(int directionValue, int* motor);
+//axialMotor axialMotor(-1,51,53);
 
 // Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   while(!Serial);
-  initDynamixel(id1);
-  setJointMode(id1);
-  //Serial.println("Ready");
-  pinMode(proximitySensor1, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(proximitySensor2, INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  mot1.init();
+  mot2.init();
+  mot3.init();
+  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+  sendMessage(outgoingMessage);
+  //pinMode(axialMotor.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  //pinMode(axialMotor.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
 }
 
 void loop() {
+
   if(Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
@@ -60,10 +75,15 @@ void loop() {
       //Serial.println(data.end);
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
-      void sendMessage(dataPack data);
+
 
       // TODO: Call move motor functinons
-      moveMotor(id1, data.p1);
+      mot1.moveMotor(data.p1);
+      mot2.moveMotor(data.p2);
+      mot3.moveMotor(data.p3);
+
+      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+      sendMessage(outgoingMessage);
     }
     else
     {
@@ -109,7 +129,7 @@ bool readDataToStruct(dataPack *data)
     i++;
   }
   memcpy(data, buf, sizeof(*data));
-  if(data->end != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
+  if(data->last != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
     return false;
     
   return true;
@@ -122,109 +142,4 @@ bool readDataToStruct(dataPack *data)
 void sendMessage(dataPack message)
 {
   Serial.write((byte*)&message, sizeof(message));
-}
-
-
-/** \brief Checks to see if the vertical axis motor should slow down
-  * \param motorDirection : integer indicating the direction of the motor 1 = UP, 0 = DOWN
-  * \return bool indicating if the motor should slow down
-  * 
-  * If motor is moving toward sensor and the sensor is FALSE, it returns TRUE.
-  * If motor is moving away from sensor and sensor is FALSE, it returns FALSE.
-  */
-bool shouldSlowDown(int motorDirection)
-{
-  proximitySensor1 = digitalRead(2); //defines the input to pin #2. The input is HIGH when nothing is capted
-
-  if (proximitySensor1 == false && motorDirection == true || motorDirection == -1)
-  {
-    return true;
-  }
-
-  if (proximitySensor1 == false && motorDirection == false)
-  {
-    return false;
-  }
-  
-  proximitySensor2 = digitalRead(4); //defines the input to pin #4. The input is HIGH when nothing is capted
-
-  if (proximitySensor2 == false && motorDirection == true)
-  {
-    return false;
-  }
-
-  if (proximitySensor2 == false && motorDirection == false || motorDirection == -1)
-  {
-    return true;
-  }
-
-}
-
-
-/** \brief Executes the calibration of the vertical axis
-  * \param motorDirection : direction in which the calibration will be run
-  * \param motor : motor id
-  * \return bool
-  * 
-  * goes towards a limit switch to set a travel limit. Returns TRUE if limit is reached, FALSE if error occurs.
-  * motorDirection Takes values of (-1 false true). -1 stands for STOP, false to go down, true for going up.
-  * This function takes a motor direction and a pointer to the axial motor.
-  */
-bool runAxialCalibration(int motorDirection,int* motor)
-{
-    if (shouldSlowDown(motorDirection) == true) //    //TODO: Add a setSpeed() function?
-    {
-        if (setAxialMotorDirection(-1, motor) == true)
-        {
-            return true; //
-        }
-    }
-
-    else
-    {
-        return false;
-    }
-
-}
-
-
-/** \brief Executes the calibration of the vertical axis
-  * \param directionValue : integer representing the direction of the motor
-  * \param motor : motor id
-  * \return bool
-  * 
-  * Set the axial motor direction to an int value between -1 false and true.-1 stands for STOP, false to go down, true for going up.
-  * The function also calls checkAxialMotorDirection() to ensure the motor is at the right direction.
-  */
-bool setAxialMotorDirection(int directionValue, int* motor)
-{
-    *motor = directionValue; //Sets the motor value to the new direction value.
-    if (checkAxialMotorDirection(directionValue, motor) == true ); //if the value is verified to be correct, the function gives true.checkAxialMotorDirection
-    {
-        return true;
-    }
-
-    if (checkAxialMotorDirection(directionValue, motor) == false );
-    {
-        return false;
-    }
-}
-
-
-
-/** \brief Checks if the motor value is correctly set to the required value.
-  * \param directionValue : integer representing the direction of the motor
-  * \param motor : motor id
-  * \return bool
-  */
-bool checkAxialMotorDirection(int directionValue, int* motor)
-{
-    if (*motor == directionValue)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
