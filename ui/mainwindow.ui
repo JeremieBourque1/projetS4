@@ -148,17 +148,11 @@
           <property name="contextMenuPolicy">
            <enum>Qt::CustomContextMenu</enum>
           </property>
-          <property name="dragDropMode">
-           <enum>QAbstractItemView::DragOnly</enum>
-          </property>
           <property name="defaultDropAction">
-           <enum>Qt::MoveAction</enum>
-          </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::SingleSelection</enum>
+           <enum>Qt::IgnoreAction</enum>
           </property>
           <property name="movement">
-           <enum>QListView::Free</enum>
+           <enum>QListView::Static</enum>
           </property>
          </widget>
         </item>

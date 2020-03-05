@@ -8,7 +8,7 @@
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
-from PySide2.QtGui import QIcon
+from PySide2.QtGui import QIcon, QBrush
 from PySide2.QtCore import QRect, Qt, QThread, QMutex
 from PySide2.QtUiTools import QUiLoader
 import sys
@@ -166,22 +166,30 @@ class ListOfSequencesHandler:
             with open('save.json', 'r') as save_file:
                 savedListOfSequences = json.load(save_file)
             # Search for the sequence that needs to be deleted
+            indexSequence = -1
             for sequence in range(len(savedListOfSequences)):
                 for sequenceName in savedListOfSequences[sequence]:
                     if sequenceName == item.getName():
                         # Delete the sequence
-                        savedListOfSequences.pop(sequence)
+                        indexSequence = sequence
+            if indexSequence != -1:
+                savedListOfSequences.pop(indexSequence)
 
             # Rewrite the save file without the deleted sequence
             with open('save.json', 'w') as save_file:
                 json.dump(savedListOfSequences, save_file)
 
-    def createWindow(self):
+    def createWindow(self, modifySequence = False):
         """
-        Create the window for to create a new sequence
+                Create the window to create a new sequence
+        :param modifySequence: bool, if true there's a selected sequence that needs to be modified if false
+        it's a new sequence
         :return: No return
         """
-        self.__window = CreateSequenceWindow(self.__motors, self)
+        if modifySequence:
+            self.__window = CreateSequenceWindow(self.__motors, self, self.getSelectedItems()[0], True)
+        else:
+            self.__window = CreateSequenceWindow(self.__motors, self, Sequence(self.__motors))
         self.__ui.setEnabled(False)
         # 2 first number QPoint where the window is created and 2 last QSize(the size of the window)
         self.__window.setGeometry(QRect(150, 150, 600, 400))
@@ -194,8 +202,7 @@ class ListOfSequencesHandler:
         :return: No return
         """
         menu = QMenu()
-        # TODO: implement the Modify Sequence functionality (show the characteristics and modify them)
-        menu.addAction("Modify Sequence")
+        menu.addAction("Modify Sequence",lambda: self.createWindow(True))
         # Add a button in the menu that when clicked, it deletes the sequence in the list
         menu.addAction("Delete Sequence", self.removeSelectedItem)
         menu.exec_(self.__listOfSequences.mapToGlobal(event))
@@ -207,11 +214,18 @@ class ListOfSequencesHandler:
         """
         self.__ui.setEnabled(True)
 
+    def getSelectedItems(self):
+        """
+        Accessor to the selected items of the list
+        :return: the selected items
+        """
+        return self.__listOfSequences.selectedItems()
+
 class CreateSequenceWindow(QDialog):
     """
     Window for creating a new sequence
     """
-    def __init__(self, motors={}, listOfSequenceHandler=None):
+    def __init__(self, motors={}, listOfSequenceHandler=None, sequence = None, modifySequence = False):
         """
         Initializtion of the window for creating a new sequence
         :param motors: The dictionary of all the motors
@@ -222,22 +236,38 @@ class CreateSequenceWindow(QDialog):
         appIcon = QIcon(icon)
         self.setWindowIcon(appIcon)
 
+        ## Flag if the sequence is a modified one or a new one
+        self.__modifySequence = modifySequence
         ## The handler of the list of sequence
         self.__listOfSequenceHandler = listOfSequenceHandler
         ## The dictionary of all the motors
         self.__motors = motors
         ## The new sequence
-        self.__sequence = Sequence(motors)
+        #self.__sequence = Sequence(motors)
+        self.__sequence = sequence
         ## A dictionary of the positions of the new sequence
         self.__wantedPositions = {}
         ## The layout of the create sequence window
         self.__layout = QVBoxLayout(self)
         ## The widget for the name of the sequence
         self.__nameEntry = QLineEdit()
+        self.__nameEntry.setText(self.__sequence.getName())
         ## The label for the widget in which the name of the sequence is written
         self.__nameLabel = QLabel("Sequence Name")
         ## The list of the different moves that forms the sequence
-        self.__listOfMoves = QListWidget()
+        self.__listOfMoveLabels = QListWidget()
+        moveNumber = 1
+        for move in self.__sequence.getMoves():
+            # Set text for the move label
+            labelText = "move " + str(moveNumber) + ": "
+            moveNumber += 1
+            for motor in self.__motors:
+                labelText += self.__motors[motor].getName() + " " + \
+                             str(move.getMotorPosition(self.__motors[motor].getName())) + ", "
+            label = moveLabel(move, labelText, self.__motors)
+
+            # insert label to the head of the list
+            self.__listOfMoveLabels.insertItem(0, label)
 
         # Put the sliders of the create sequence window in a list
         ## List of sliders in the create sequence window
@@ -276,13 +306,13 @@ class CreateSequenceWindow(QDialog):
             self.__motorLabels.append(QLabel("Motor " + str(motorNumber+1) + " position"))
 
         ## Button to add a move to the sequence and procede to the next move
-        self.nextMoveButton = QPushButton("Next Move")
+        self.nextMoveButton = QPushButton("Save Move")
 
         ## Buttons to accept or cancel the creation of a sequence
         self.buttonBox = QDialogButtonBox()
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
         # If ok pressed add the sequence to the list
-        self.buttonBox.accepted.connect(self.addItem)
+        self.buttonBox.accepted.connect(lambda: self.addItem(self.__modifySequence))
         # If cancel pressed close the create sequence window
         self.buttonBox.rejected.connect(self.__warningMessage.exec)
 
@@ -290,20 +320,23 @@ class CreateSequenceWindow(QDialog):
         self.rejected.connect(self.__listOfSequenceHandler.enableUi)
         self.accepted.connect(self.__listOfSequenceHandler.enableUi)
 
-        self.__nameEntry.textEdited.connect(self.setName)
         self.nextMoveButton.clicked.connect(self.addMovetoSequence)
 
-        self.__listOfMoves.itemDoubleClicked.connect(self.moveDoubleClicked)
+        self.__listOfMoveLabels.itemDoubleClicked.connect(self.moveDoubleClicked)
 
         # Build the vertical layout with the different widgets
         self.__layout.addWidget(self.__nameLabel)
         self.__layout.addWidget(self.__nameEntry)
-        self.__layout.addWidget(self.__listOfMoves)
+        self.__layout.addWidget(self.__listOfMoveLabels)
         for motorNumber in range(len(self.__motors)):
             self.__layout.addWidget(self.__motorLabels[motorNumber])
             self.__layout.addWidget(self.listOfSliders[motorNumber])
         self.__layout.addWidget(self.nextMoveButton)
         self.__layout.addWidget(self.buttonBox)
+
+        # Connect the qwidgetlist to the custom right click menu
+        self.__listOfMoveLabels.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.__listOfMoveLabels.customContextMenuRequested.connect(self.rightClickMenu)
 
     def setName(self, name):
         """
@@ -313,20 +346,16 @@ class CreateSequenceWindow(QDialog):
         """
         self.__sequence.setName(name)
 
-    def addItem(self):
+    def addItem(self, modifySequence = False):
         """
         Add the sequence to the list of sequence
-        :return:
+        :param modifySequence: bool, if true there's a selected sequence that needs to be modified if false
+        it's a new sequence
+        :return: No return
         """
-        if self.__sequence.getName() != "":
-            self.__listOfSequenceHandler.addItem(self.__sequence)
-            # Make the sequence json seriable
-            newSequence = dict()
-            newSequence[self.__sequence.getName()] = []
-            for moveNumber in range(len(self.__sequence.getMoves())):
-                newSequence[self.__sequence.getName()].append(
-                    self.__sequence.getMoves()[moveNumber].getMovePositions())
-
+        # TODO: move this method to the list of sequence handler
+        # TODO: don't let the user enter a sequence that has the same name as an old one
+        if self.__nameEntry.text() != "":
             # Load previously saved sequences
             try:
                 with open('save.json') as save:
@@ -334,14 +363,50 @@ class CreateSequenceWindow(QDialog):
             except FileNotFoundError:
                 print("Save file not found")
                 savedListOfSequences = []
-            # Append new sequence to the old ones
-            savedListOfSequences.append(newSequence)
+            if modifySequence:
+                # Get the item that needs to be modified
+                selectedSequence = self.__listOfSequenceHandler.getSelectedItems()
+                # Find the selected sequence in the list of saved ones
+                for sequence in savedListOfSequences:
+                    if selectedSequence[0].getName() in sequence:
+                        indexOfTheSequence = savedListOfSequences.index(sequence)
+                        # remove the unmodified sequence to insert the modified sequence
+                        savedListOfSequences.remove(sequence)
+                        self.setName(self.__nameEntry.text())
+                        self.__listOfSequenceHandler.addItem(self.__sequence)
+                        # Make the sequence json seriable
+                        newSequence = dict()
+                        newSequence[self.__sequence.getName()] = []
+                        for moveNumber in range(len(self.__sequence.getMoves())):
+                            newSequence[self.__sequence.getName()].append(
+                                self.__sequence.getMoves()[moveNumber].getMovePositions())
 
-            # Write the sequences to the file
-            with open('save.json', 'w') as outfile:
-                json.dump(savedListOfSequences, outfile)
+                        # Append new sequence to the old ones
+                        savedListOfSequences.insert(indexOfTheSequence,newSequence)
 
-            self.accept()
+                        # Write the sequences to the file
+                        with open('save.json', 'w') as outfile:
+                            json.dump(savedListOfSequences, outfile)
+
+                        self.accept()
+            else:
+                self.setName(self.__nameEntry.text())
+                self.__listOfSequenceHandler.addItem(self.__sequence)
+                # Make the sequence json seriable
+                newSequence = dict()
+                newSequence[self.__sequence.getName()] = []
+                for moveNumber in range(len(self.__sequence.getMoves())):
+                    newSequence[self.__sequence.getName()].append(
+                        self.__sequence.getMoves()[moveNumber].getMovePositions())
+
+                # Append new sequence to the old ones
+                savedListOfSequences.append(newSequence)
+
+                # Write the sequences to the file
+                with open('save.json', 'w') as outfile:
+                    json.dump(savedListOfSequences, outfile)
+
+                self.accept()
         else:
             self.setEnabled(False)
             self.__noNameMessage.exec_()
@@ -349,28 +414,60 @@ class CreateSequenceWindow(QDialog):
     def addMovetoSequence(self):
         """
         Add the last move to the sequence
-        :return:
+        :return: No return
         """
+        move = None
+        labelToModify = None
+        # Check if there's a move in modifying state
+        for row in range(self.__listOfMoveLabels.count()):
+            if not self.__listOfMoveLabels.item(row).getMove().isNew:
+                move = self.__listOfMoveLabels.item(row).getMove()
+                labelToModify = self.__listOfMoveLabels.item(row)
+                break
+        # verify if the move is a new one
+        if move is None:
+            # Create the new move and set his positions
+            move = Move(self.__motors)
+            i = 0
+            for motorName in self.__motors:
+                move.setMotorPosition(motorName, self.listOfSliders[i].value())
+                i += 1
+            self.__sequence.addMove(move)
 
-        # Create the new move and set his positions
-        move = Move(self.__motors)
-        i = 0
-        for motorName in self.__motors:
-            move.setMotorPosition(motorName, self.listOfSliders[i].value())
-            i += 1
-        self.__sequence.addMove(move)
+            # Set text for the move label
+            labelText = "move " + str(self.__sequence.getNumberofMoves()) +": "
+            i = 0
+            for motor in self.__motors:
+                labelText += self.__motors[motor].getName() + " " +\
+                             str(self.listOfSliders[i].value()) + ", "
+                i += 1
+            label = moveLabel(move,labelText,self.__motors)
 
-        # Set text for the move label
-        labelText = "move " + self.__sequence.getNumberofMoves() +": "
-        i = 0
-        for motor in self.__motors:
-            labelText += self.__motors[motor].getName() + " " +\
-                         str(self.listOfSliders[i].value()) + ", "
-            i += 1
-        label = moveLabel(move,labelText,self.__motors)
+            # insert label to the head of the list
+            self.__listOfMoveLabels.insertItem(0, label)
+        else:
+            # modify the move
+            i = 0
+            for motorName in self.__motors:
+                move.setMotorPosition(motorName, self.listOfSliders[i].value())
+                i += 1
 
-        # insert label to the head of the list
-        self.__listOfMoves.insertItem(0, label)
+            # modify the label of the move
+            textToEdit = labelToModify.text()
+            listOfTextToEdit = textToEdit.split(' ')
+            labelText = listOfTextToEdit[0] + " " + listOfTextToEdit[1] + " "
+            i = 0
+            for motor in self.__motors:
+                labelText += self.__motors[motor].getName() + " " + \
+                             str(self.listOfSliders[i].value()) + ", "
+                i += 1
+            labelToModify.setText(labelText)
+            labelToModify.setSelected(False)
+            labelToModify.setBackground(Qt.white)
+
+            # reset the state of the move
+            move.isNew = True
+
 
     # Access the move positions when double clicked on
     def moveDoubleClicked(self, moveItem):
@@ -387,6 +484,50 @@ class CreateSequenceWindow(QDialog):
         :return:
         """
         self.setEnabled(True)
+
+    def rightClickMenu(self, event):
+        """
+        The right click menu of the move list
+        :param event: The event (here right click) that makes the menu come up
+        :return: No return
+        """
+        menu = QMenu()
+        # Add a button in the menu that when clicked, it puts a move in modifying state
+        menu.addAction("Modify Move",lambda: self.modifyMove(self.__listOfMoveLabels.selectedItems()[0]))
+        # Add a button in the menu that when clicked, it deletes a move in the list
+        menu.addAction("Delete Move",lambda: self.deleteMove(self.__listOfMoveLabels.selectedItems()[0]))
+        menu.exec_(self.__listOfMoveLabels.mapToGlobal(event))
+
+    def deleteMove(self,label):
+        """
+        Delete a move and its label of the sequence
+        :param label: label of the move
+        :return: No return
+        """
+        # remove the label from the list
+        self.__listOfMoveLabels.takeItem(self.__listOfMoveLabels.row(label))
+        # remove the move from the sequence
+        self.__sequence.deleteMove(label.getMove())
+
+        # rename the labels in the list of moves
+        for index in range(self.__sequence.getNumberofMoves()-1,-1,-1):
+            labelToModify = self.__listOfMoveLabels.item(index)
+            textToEdit = labelToModify.text()
+            listOfTextToEdit = textToEdit.split(' ')
+            listOfTextToEdit[1] = str(self.__sequence.getNumberofMoves()-index) + ':'
+            textToEdit = ' '.join(listOfTextToEdit)
+            self.__listOfMoveLabels.item(index).setText(textToEdit)
+
+    def modifyMove(self,label):
+        """
+        Put a move to a modified state
+        :param label: label of the move
+        :return: No return
+        """
+        # TODO: set the sliders to the value of the motors in the move
+        moveToModify = label.getMove()
+        moveToModify.isNew = False
+        label.setBackground(QBrush(Qt.darkCyan))
 
 class moveLabel(QListWidgetItem):
     """
@@ -416,6 +557,12 @@ class moveLabel(QListWidgetItem):
         for motor in self.__motors:
             print(motor + " "+ str(self.__move.getMotorPosition(motor)))
 
+    def getMove(self):
+        """
+        Accessor of the move of the label
+        :return: the move object
+        """
+        return self.__move
 
 # Class for a sequence of moves
 class Sequence(QListWidgetItem):
@@ -461,11 +608,22 @@ class Sequence(QListWidgetItem):
         """
         :return: The number of moves in the sequence
         """
-        return str(len(self.__moves))
+        return len(self.__moves)
 
     def getMoves(self):
+        """
+        Acessor of the moves of the sequence
+        :return: The moves of the sequence
+        """
         return self.__moves
 
+    def deleteMove(self, move):
+        """
+        Delete a specific move of the sequence
+        :param move: the move to be deleted
+        :return: No return
+        """
+        self.__moves.remove(move)
 
 # Class for a move of a sequence
 class Move:
@@ -477,6 +635,8 @@ class Move:
         self.__motors = motors
         ## To store the different positions of the move
         self.__movePositions = dict()
+        ## State of the move (modified or new)
+        self.isNew = True
         # Initialize move positions to an invalid position (-1)
         for motor in self.__motors:
             self.__movePositions[motor] = -1
@@ -510,8 +670,6 @@ class Move:
     def getMovePositions(self):
         return self.__movePositions
 
-
-# Class for a motor and its characteristics
 class Motor:
     """
     Class for a motor which has a position, a name and a status
@@ -542,7 +700,7 @@ class Motor:
         :param pos: the position
         :return: No return
         """
-        self.__goalPosition=self.__gearRatio*pos
+        self.__goalPosition=pos
         print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
