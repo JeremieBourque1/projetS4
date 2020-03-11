@@ -18,6 +18,8 @@ import serial
 import time
 import os
 import json
+from collections import deque
+import serial.tools.list_ports
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -31,8 +33,9 @@ os.chdir(os.path.dirname(__file__))
 ## App icon
 icon = 'icon.png'
 ## Serial communication port
-commPort = 'COM4'
-# TODO: port should be chosen in the gui
+ports = serial.tools.list_ports.comports()
+ports_list = ['Select a communication port']
+ports_list.extend(ports)
 
 ## Robotic arm's number of motors
 numberOfMotors = 6
@@ -116,6 +119,28 @@ class MessageReception(QThread):
         if self.firstMessage:
             self.mainWindow.initializeSliderPositions()
             self.firstMessage = False
+
+
+class MessageTransmission(QThread):
+    """
+    Class for a thread that handles outgoing serial messages
+    """
+    def __init__(self, mainWindow):
+        super(MessageTransmission, self).__init__()
+        self.mainWindow = mainWindow
+        self.shouldRun = True
+        self.counter = 0
+        self.firstMessage = True
+
+    def run(self):
+        print("Message Transmission thread started")
+        while self.shouldRun:
+            time.sleep(0.1)
+            if len(self.mainWindow.msgDeque) > 0:
+                self.mainWindow.msgMu.lock()
+                print("deque length: %d" % len(self.mainWindow.msgDeque))
+                self.mainWindow.comm.write(self.mainWindow.msgDeque.popleft())
+                self.mainWindow.msgMu.unlock()
 
 
 class ListOfSequencesHandler:
@@ -779,14 +804,29 @@ class MainWindow(QMainWindow):
         # self.setMaximumHeight(200)
         # self.setMaximumWidth(800)
         self.setIcon()
+        self.msgMu = QMutex()
+
+        # Connect button signals
+        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+
+        # Initialize ports in the drop down menu
+        for index in range(len(ports_list)):
+            result = isinstance(ports_list[index], str)
+            if result == False:
+                self.ui.portselection.addItem(ports_list[index].device)
+            else:
+                self.ui.portselection.addItem(ports_list[index])
 
         # Serial communication
-        self.comm, self.serialConnected = initSerialConnection(commPort)
+        ## Message reception QThread object
+        self.msgReception = MessageReception(self)
+        self.msgTransmission = MessageTransmission(self)
+        self.comm = None
+        self.serialConnected = None
+        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
 
-        if self.serialConnected:
-            ## Message reception QThread object
-            self.msgReception = MessageReception(self)
-            self.msgReception.start()
+        ## Outgoing message deque
+        self.msgDeque = deque(maxlen=3)
 
         # ---------------
         ## Dictionnary of all motor objects
@@ -820,6 +860,20 @@ class MainWindow(QMainWindow):
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+
+    def connect_port(self):
+        """
+        Connect the selected port of the Arduino
+        :return: None
+        """
+        commPort = self.ui.portselection.currentText()
+        for index in range(len(ports_list)):
+            result = isinstance(commPort, str)
+            if not result:
+                commPort = ports_list[index].device
+        self.comm, self.serialConnected = initSerialConnection(commPort)
+        self.msgReception.start()
+        self.msgTransmission.start()
 
     def setIcon(self):
         """
@@ -861,7 +915,9 @@ def sendMessage(mainWindow):
                   mainWindow.dictMot["motor6"].getGoalPosition(),
                   b'\0')
         packed_data = s.pack(*values)
-        mainWindow.comm.write(packed_data)
+        mainWindow.msgMu.lock()
+        mainWindow.msgDeque.append(packed_data)
+        mainWindow.msgMu.unlock()
     else:
         print("Error sending message, serial not connected")
 
