@@ -18,6 +18,7 @@ import serial
 import time
 import os
 import json
+import serial.tools.list_ports
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -30,9 +31,11 @@ os.chdir(os.path.dirname(__file__))
 
 ## App icon
 icon = 'icon.png'
+
 ## Serial communication port
-commPort = 'COM4'
-# TODO: port should be chosen in the gui
+ports = serial.tools.list_ports.comports()
+ports_list = ['Select a communication port']
+ports_list.extend(ports)
 
 ## Robotic arm's number of motors
 numberOfMotors = 6
@@ -48,7 +51,6 @@ structDefinition = '6Hc'
 s = struct.Struct(structDefinition)
 messageSize = struct.calcsize(structDefinition)
 
-
 def initSerialConnection(port):
     """
     Initialize serial communication with a specified port
@@ -59,10 +61,12 @@ def initSerialConnection(port):
         ser = serial.Serial(port, 9600, timeout=0.1)
         print("Connected to %s" % port)
         connected = True
+
     except serial.serialutil.SerialException:
         print("Failed to connect to %s." % port)
         ser = None
         connected = False
+
     return ser, connected
 
 def loadSequences(listOfSequenceHandler,motors):
@@ -780,13 +784,23 @@ class MainWindow(QMainWindow):
         # self.setMaximumWidth(800)
         self.setIcon()
 
-        # Serial communication
-        self.comm, self.serialConnected = initSerialConnection(commPort)
+        # Connect button signals
+        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
-        if self.serialConnected:
-            ## Message reception QThread object
-            self.msgReception = MessageReception(self)
-            self.msgReception.start()
+        # Initialize ports in the drop down menu
+        for index in range(len(ports_list)):
+            result = isinstance(ports_list[index], str)
+            if result == False:
+                self.ui.portselection.addItem(ports_list[index].device)
+            else:
+                self.ui.portselection.addItem(ports_list[index])
+
+        # Serial communication
+        ## Message reception QThread object
+        self.msgReception = MessageReception(self)
+        self.comm = None
+        self.serialConnected = None
+        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
 
         # ---------------
         ## Dictionnary of all motor objects
@@ -818,8 +832,18 @@ class MainWindow(QMainWindow):
         self.ui.slider_mot6.valueChanged.connect(
             lambda: self.dictMot["motor6"].setGoalPosition(self.ui.slider_mot6.value()))
 
-        # Connect button signals
-        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+    def connect_port(self):
+        """
+        Connect the selected port of the Arduino
+        :return: None
+        """
+        commPort = self.ui.portselection.currentText()
+        for index in range(len(ports_list)):
+            result = isinstance(commPort, str)
+            if result == False:
+                commPort = ports_list[index].device
+        self.comm, self.serialConnected = initSerialConnection(commPort)
+        self.msgReception.start()
 
     def setIcon(self):
         """

@@ -15,7 +15,7 @@ app = QApplication(sys.argv)
 
 class TestMove(unittest.TestCase):
     def setUp(self):
-        self.testComm, serialConnected = RoboAide.initSerialConnection(RoboAide.commPort)
+        self.testComm, serialConnected = RoboAide.initSerialConnection('COM3')
         self.testWindow = RoboAide.MainWindow()
         self.testMove = RoboAide.Move(self.testWindow.dictMot)
 
