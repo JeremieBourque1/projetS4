@@ -107,7 +107,6 @@ class MessageReception(QThread):
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
-            pass
             message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
             if len(message) == messageSize+1:
                 print("message received")
@@ -821,17 +820,12 @@ class MainWindow(QMainWindow):
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
-        # Initialize ports in the drop down menu
-        for index in range(len(ports_list)):
-            result = isinstance(ports_list[index], str)
-            if result == False:
-                self.ui.portselection.addItem(ports_list[index].device)
-            else:
-                self.ui.portselection.addItem(ports_list[index])
+        self.populatePortsList()
 
         # Serial communication
         ## Message reception QThread object
         self.msgReception = MessageReception(self)
+        ## Message transmission QThread object
         self.msgTransmission = MessageTransmission(self)
         app.aboutToQuit.connect(self.msgReception.stop)
         app.aboutToQuit.connect(self.msgTransmission.stop)
@@ -875,8 +869,6 @@ class MainWindow(QMainWindow):
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
-
-
     def connect_port(self):
         """
         Connect the selected port of the Arduino
@@ -888,7 +880,8 @@ class MainWindow(QMainWindow):
             if not result:
                 commPort = ports_list[index].device
         self.comm, self.serialConnected = initSerialConnection(commPort)
-        app.aboutToQuit.connect(self.comm.close)
+        self.msgReception.stop()
+        self.msgTransmission.stop()
         self.msgReception.start()
         self.msgTransmission.start()
 
@@ -914,6 +907,19 @@ class MainWindow(QMainWindow):
         self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
         self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
         print("Finished initializing slider positions")
+
+    def populatePortsList(self):
+        """
+        Populate the available serial ports in the drop down menu
+        :return: None
+        """
+        print("Scanning and populating list of available serial ports")
+        for index in range(len(ports_list)):
+            result = isinstance(ports_list[index], str)
+            if not result:
+                self.ui.portselection.addItem(ports_list[index].device)
+            else:
+                self.ui.portselection.addItem(ports_list[index])
 
 
 # Send message to Arduino containing all motor values
