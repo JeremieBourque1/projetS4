@@ -16,7 +16,7 @@ app = QApplication(sys.argv)
 class TestMove(unittest.TestCase):
     def setUp(self):
         self.testComm, serialConnected = RoboAide.initSerialConnection('COM3')
-        self.testWindow = RoboAide.MainWindow()
+        self.testWindow = RoboAide.MainWindow(app)
         self.testMove = RoboAide.Move(self.testWindow.dictMot)
 
     def test_get_position(self):
@@ -35,7 +35,7 @@ class TestMove(unittest.TestCase):
 
 class TestMotor(unittest.TestCase):
     def setUp(self):
-        self.testWindow = RoboAide.MainWindow()
+        self.testWindow = RoboAide.MainWindow(app)
         self.testMotor = RoboAide.Motor(self.testWindow, "testMotor", 500, True)
 
     def test_get_position(self):

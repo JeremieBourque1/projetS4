@@ -20,6 +20,7 @@ import os
 import json
 from collections import deque
 import serial.tools.list_ports
+import threading
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -68,6 +69,7 @@ def initSerialConnection(port):
         connected = False
     return ser, connected
 
+
 def loadSequences(listOfSequenceHandler,motors):
     """
     To load the saved sequence in the save.json file and put them in the list of sequence
@@ -90,6 +92,7 @@ def loadSequences(listOfSequenceHandler,motors):
     except FileNotFoundError:
         print("Save file not found")
 
+
 class MessageReception(QThread):
     """
     Class for a thread that handles incoming serial messages
@@ -104,7 +107,8 @@ class MessageReception(QThread):
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
-            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra bit is received (only happens with openCr)
+            pass
+            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
             if len(message) == messageSize+1:
                 print("message received")
                 unpacked_msg = s.unpack(message[:-1])  # Unpack message
@@ -112,6 +116,10 @@ class MessageReception(QThread):
                 print(unpacked_msg)
                 self.counter += 1
                 self.setMotorCurrentPosition(unpacked_msg)
+
+    def stop(self):
+        self.shouldRun = False
+        print("Stopping Message Reception thread")
 
     def setMotorCurrentPosition(self, msg):
         for i in range(numberOfMotors):
@@ -135,12 +143,16 @@ class MessageTransmission(QThread):
     def run(self):
         print("Message Transmission thread started")
         while self.shouldRun:
-            time.sleep(0.1)
+            self.sleep(0.1)
             if len(self.mainWindow.msgDeque) > 0:
                 self.mainWindow.msgMu.lock()
                 print("deque length: %d" % len(self.mainWindow.msgDeque))
                 self.mainWindow.comm.write(self.mainWindow.msgDeque.popleft())
                 self.mainWindow.msgMu.unlock()
+
+    def stop(self):
+        self.shouldRun = False
+        print("Stopping Message Transmission thread")
 
 
 class ListOfSequencesHandler:
@@ -790,7 +802,7 @@ class MainWindow(QMainWindow):
     """
     Main window class
     """
-    def __init__(self):
+    def __init__(self, app):
         """
         MainWindow initialization
         """
@@ -821,6 +833,8 @@ class MainWindow(QMainWindow):
         ## Message reception QThread object
         self.msgReception = MessageReception(self)
         self.msgTransmission = MessageTransmission(self)
+        app.aboutToQuit.connect(self.msgReception.stop)
+        app.aboutToQuit.connect(self.msgTransmission.stop)
         self.comm = None
         self.serialConnected = None
         self.ui.portselection.currentIndexChanged.connect(self.connect_port)
@@ -861,6 +875,8 @@ class MainWindow(QMainWindow):
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
 
+
+
     def connect_port(self):
         """
         Connect the selected port of the Arduino
@@ -872,6 +888,7 @@ class MainWindow(QMainWindow):
             if not result:
                 commPort = ports_list[index].device
         self.comm, self.serialConnected = initSerialConnection(commPort)
+        app.aboutToQuit.connect(self.comm.close)
         self.msgReception.start()
         self.msgTransmission.start()
 
@@ -933,6 +950,6 @@ def calibrateVerticalAxis():
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(app)
     app.exec_()
     sys.exit()
