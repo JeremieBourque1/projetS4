@@ -60,29 +60,42 @@ axialMotor::axialMotor()
 bool axialMotor::shouldSlowDown()
 {
  int proximitySensor1Reading = digitalRead(getProximitySensorPin(1)); //defines the input to pins #51. The input is HIGH when nothing is capted this is the top sensor
-
+  //Serial.print("la valeur de proximite est de :");
+  //Serial.print(proximitySensor1Reading);
   if (proximitySensor1Reading == false && getMotorState() == true || getMotorState() == -1)
   {
+   // Serial.print("Je lis le capteur et le moteur monte");
     return true;
   }
 
   else if (proximitySensor1Reading == false && getMotorState() == false)
   {
+    //Serial.print("Je lis le capteur et le moteur DESCEND");
     return false;
   }
-
+  else
+  {
+    return false;
+  }
  int proximitySensor2Reading = digitalRead(getProximitySensorPin(2)); //defines the input to pin #53. The input is HIGH when nothing is capted
+ //Serial.print("TU ENTRE EN CAPTEUR 2!");
 
   if (proximitySensor2Reading == false && getMotorState() == true)
   {
+  //  Serial.print("CAPTEUR 2 UNDER CONSTRUCTION");
     return false;
   }
 
   else if (proximitySensor2Reading == false && getMotorState() == false || getMotorState() == -1)
   {
+   // Serial.print("CAPTEUR 2 UNDER CONSTRUCTION");
     return true;
   }
-
+  
+  else
+  {
+    return false;
+  }
 }
 
 /** \brief Calibrate the assembly's vertical axis using the upper proximity sensor.
@@ -94,16 +107,16 @@ bool axialMotor::shouldSlowDown()
 bool axialMotor::runAxialCalibration()
 {
     setMotorState(1);
-    if (shouldSlowDown() == true)
+    //Serial.print("le moteur tourne maintenant");
+    while (shouldSlowDown() == false)
     {
-      setMotorState(-1);
-      return true; 
+       if (shouldSlowDown() == true)
+        {
+           setMotorState(-1);
+           return true; 
+        }
     }
-
-    else
-    {
-        return false;
-    }
+  return false;
 
 }
 
@@ -112,41 +125,38 @@ bool axialMotor::runAxialCalibration()
  */
 void axialMotor::setMotorState(int stateValue)
 {
-  Serial.println("JE PASSE ICI");
-    Serial.println(stateValue);
+  //Serial.println("JE PASSE ICI");
+    //Serial.println(stateValue);
 
   if (stateValue != -1 && stateValue != 1 && stateValue != 0)
      {
-        Serial.println("MAUVAISE ENTRÉE, MAINTENANT MOTORSTATE SERA DE :");
+        //Serial.println("MAUVAISE ENTRÉE, MAINTENANT MOTORSTATE SERA DE :");
         
         stateValue = -1; //doesn't move the motor
      }
-  Serial.println("ICI SI LE STATE VALUE EST correct");
-  Serial.print('\n');
+  //Serial.println("STATE VALUE correct");
   motorState = stateValue; //Sets the motor value to the new direction value.
    
   if (motorState == 1) //Changes the motor rotation by changing output pin value.
      {
-       Serial.println("ICI SI LE STATE VALUE EST DE 1");
-       Serial.print('\n');
+       //Serial.println("ICI SI LE STATE VALUE EST DE 1");
        
        digitalWrite(getMotorPin(1),HIGH);
        digitalWrite(getMotorPin(2),LOW);
-       Serial.print(digitalRead(getMotorPin(1)));
-       Serial.print(digitalRead(getMotorPin(2)));
+       //Serial.print(digitalRead(getMotorPin(1)));
+       //Serial.print(digitalRead(getMotorPin(2)));
      }
      
   else if (motorState == 0)
      {
-       Serial.println("ICI SI LE STATE VALUE EST DE 0");
-       Serial.print('\n');
+      // Serial.println("ICI SI LE STATE VALUE EST DE 0");
        digitalWrite(getMotorPin(2),HIGH);
        digitalWrite(getMotorPin(1),LOW);
      }
      
   else if (motorState == -1)
      {
-       Serial.print("ICI SI LE STATE VALUE EST DE -1");
+      // Serial.print("ICI SI LE STATE VALUE EST DE -1");
        digitalWrite(getMotorPin(2),LOW);
        digitalWrite(getMotorPin(1),LOW);
      }
@@ -240,3 +250,5 @@ int axialMotor::getDrivePin()
 {
   return enAPin;
 }
+
+void readPWM
