@@ -43,7 +43,7 @@ bool runAxialCalibration(int motorDirection, int* motor);
 bool setAxialMotorDirection(int directionValue, int* motor);
 bool checkAxialMotorDirection(int directionValue, int* motor);
 //axialMotor axialMotor(13,-1,47,49,51,53);
-axialMotor test;
+axialMotor test; //classe test
 
 // Arduino functions
 void setup() {
@@ -63,10 +63,11 @@ void setup() {
 
 void loop() {
   test.setEnableDrive(true);
-  test.setMotorState(1);
+  //test.setMotorState(-1);
+  test.runAxialCalibration();
   Serial.println("done");
   while (1)
-
+  //{Serial.print(test.getProximitySensorValue(1));}
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
