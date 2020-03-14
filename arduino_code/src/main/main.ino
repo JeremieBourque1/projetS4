@@ -38,10 +38,10 @@ struct dataPack {
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
-bool shouldSlowDown(int motorDirection);
-bool runAxialCalibration(int motorDirection, int* motor);
-bool setAxialMotorDirection(int directionValue, int* motor);
-bool checkAxialMotorDirection(int directionValue, int* motor);
+//bool shouldSlowDown(int motorDirection);
+//bool runAxialCalibration(int motorDirection, int* motor);
+//bool setAxialMotorDirection(int directionValue, int* motor);
+//bool checkAxialMotorDirection(int directionValue, int* motor);
 //axialMotor axialMotor(13,-1,47,49,51,53);
 axialMotor test; //classe test
 
