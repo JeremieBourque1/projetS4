@@ -880,8 +880,7 @@ class MainWindow(QMainWindow):
             if not result:
                 commPort = ports_list[index].device
         self.comm, self.serialConnected = initSerialConnection(commPort)
-        self.msgReception.stop()
-        self.msgTransmission.stop()
+        app.aboutToQuit.connect(self.comm.close)
         self.msgReception.start()
         self.msgTransmission.start()
 

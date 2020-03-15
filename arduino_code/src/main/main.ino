@@ -1,5 +1,5 @@
 #include <Arduino.h>
-//#include "dynamixel.h"
+#include "dynamixel.h"
 #include "axialMotor.h"
 
 // Declare constants
@@ -8,9 +8,9 @@ char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
-//Dynamixel mot1(id1, 28);
-//Dynamixel mot2(id2, 40);
-//Dynamixel mot3(id3, 20);
+Dynamixel mot1(id1, 28);
+Dynamixel mot2(id2, 40);
+Dynamixel mot3(id3, 20);
 
 
 /**
@@ -49,24 +49,24 @@ axialMotor test; //classe test
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   while (!Serial);
-//  mot1.init();
-//  mot2.init();
-//  mot3.init();
-//  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
-//  sendMessage(outgoingMessage);
-  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(test.getMotorPin(1),OUTPUT);
-  pinMode(test.getMotorPin(2),OUTPUT);
-  pinMode(test.getDrivePin(),OUTPUT);
+  mot1.init();
+  mot2.init();
+  mot3.init();
+  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+  sendMessage(outgoingMessage);
+//  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+//  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+//  pinMode(test.getMotorPin(1),OUTPUT);
+//  pinMode(test.getMotorPin(2),OUTPUT);
+//  pinMode(test.getDrivePin(),OUTPUT);
 }
 
 void loop() {
-  test.setEnableDrive(true);
+  //test.setEnableDrive(true);
   //test.setMotorState(-1);
-  test.runAxialCalibration();
-  Serial.println("done");
-  while (1)
+  //test.runAxialCalibration();
+  //Serial.println("done");
+  //while (1)
   //{Serial.print(test.getProximitySensorValue(1));}
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
@@ -87,12 +87,12 @@ void loop() {
 
 
       // TODO: Call move motor functinons
-//      mot1.moveMotor(data.p1);
-//      mot2.moveMotor(data.p2);
-//      mot3.moveMotor(data.p3);
+      mot1.moveMotor(data.p1);
+      mot2.moveMotor(data.p2);
+      mot3.moveMotor(data.p3);
 
-//      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
-//      sendMessage(outgoingMessage);
+      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+      sendMessage(outgoingMessage);
     }
     else
     {

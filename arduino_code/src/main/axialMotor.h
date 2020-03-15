@@ -250,5 +250,3 @@ int axialMotor::getDrivePin()
 {
   return enAPin;
 }
-
-void readPWM
