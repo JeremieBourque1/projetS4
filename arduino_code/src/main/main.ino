@@ -3,7 +3,7 @@
 #include "axialMotor.h"
 
 // Declare constants
-const int MESSAGE_SIZE = 13;
+const int MESSAGE_SIZE = 15;
 char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
@@ -18,6 +18,8 @@ Dynamixel mot3(id3, 20);
    \brief A structure containing message data
 */
 struct dataPack {
+  //! Operation mode
+  char mode;
   //! Motor 1 position
   uint16_t p1;
   //! Motor 2 position
@@ -38,6 +40,8 @@ struct dataPack {
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
+void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
+void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
 //bool shouldSlowDown(int motorDirection);
 //bool runAxialCalibration(int motorDirection, int* motor);
 //bool setAxialMotorDirection(int directionValue, int* motor);
@@ -45,7 +49,6 @@ void sendMessage(dataPack message);
 //axialMotor axialMotor(13,-1,47,49,51,53);
 axialMotor test; //classe test
 
-// Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   while (!Serial);
@@ -85,13 +88,26 @@ void loop() {
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
 
+      if(data.mode == 'a')
+      {
+        moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+      }
+      else if(data.mode == 'i')
+      {
+        moveIncremental(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+      }
+      else if(data.mode == 's')
+      {
+        // Do nothing apart from sending message
+      }
+      else if(data.mode == 'c')
+      {
+        //TODO: connect to calibration function
+      }
 
-      // TODO: Call move motor functinons
-      mot1.moveMotor(data.p1);
-      mot2.moveMotor(data.p2);
-      mot3.moveMotor(data.p3);
 
-      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+
+      dataPack outgoingMessage{b'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, b'\0'};
       sendMessage(outgoingMessage);
     }
     else
@@ -152,3 +168,23 @@ void sendMessage(dataPack message)
 {
   Serial.write((byte*)&message, sizeof(message));
 }
+
+
+/** \brief move motors to an absolute position
+    \param p1, ..., p6 : position for each motor
+*/
+void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
+{
+    mot1.moveMotor(p1);
+    mot2.moveMotor(p2);
+    mot3.moveMotor(p3);
+}
+
+/** \brief move motors to an incremental position
+    \param p1, ..., p6 : position for each motor
+*/
+void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
+{
+  //TODO
+}
+

@@ -9,18 +9,16 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QThread, QMutex
+from PySide2.QtCore import QRect, Qt, QMutex
 from PySide2.QtUiTools import QUiLoader
+from Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from collections import deque
 import sys
 import warnings
 import struct
-import serial
-import time
 import os
 import json
-from collections import deque
-import serial.tools.list_ports
-import threading
+
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -29,45 +27,10 @@ import threading
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
 # Change working directory to this script's directory to easily access mainwindow.ui
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 ## App icon
 icon = 'icon.png'
-## Serial communication port
-ports = serial.tools.list_ports.comports()
-ports_list = ['Select a communication port']
-ports_list.extend(ports)
-
-## Robotic arm's number of motors
-numberOfMotors = 6
-
-# Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
-# Ignore the part with the py_filter.py!!
-# To see the doc go to docs->html->index.html
-
-## Define struct format for communicating messages
-# H (short, 2 bytes) : motor position
-# message size = 12 bytes
-structDefinition = '6Hc'
-s = struct.Struct(structDefinition)
-messageSize = struct.calcsize(structDefinition)
-
-
-def initSerialConnection(port):
-    """
-    Initialize serial communication with a specified port
-    :param port: serial port name
-    :return: serial object and bool indicating if connection was successful
-    """
-    try:
-        ser = serial.Serial(port, 9600, timeout=0.1)
-        print("Connected to %s" % port)
-        connected = True
-    except serial.serialutil.SerialException:
-        print("Failed to connect to %s." % port)
-        ser = None
-        connected = False
-    return ser, connected
 
 
 def loadSequences(listOfSequenceHandler,motors):
@@ -91,67 +54,6 @@ def loadSequences(listOfSequenceHandler,motors):
                 listOfSequenceHandler.addItem(savedSequence)
     except FileNotFoundError:
         print("Save file not found")
-
-
-class MessageReception(QThread):
-    """
-    Class for a thread that handles incoming serial messages
-    """
-    def __init__(self, mainWindow):
-        super(MessageReception, self).__init__()
-        self.mainWindow = mainWindow
-        self.shouldRun = True
-        self.counter = 0
-        self.firstMessage = True
-
-    def run(self):
-        print("Message Reception thread started")
-        while self.shouldRun:
-            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
-            if len(message) == messageSize+1:
-                print("message received")
-                unpacked_msg = s.unpack(message[:-1])  # Unpack message
-                print(str(self.counter) + ": ", end='')
-                print(unpacked_msg)
-                self.counter += 1
-                self.setMotorCurrentPosition(unpacked_msg)
-
-    def stop(self):
-        self.shouldRun = False
-        print("Stopping Message Reception thread")
-
-    def setMotorCurrentPosition(self, msg):
-        for i in range(numberOfMotors):
-            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
-        if self.firstMessage:
-            self.mainWindow.initializeSliderPositions()
-            self.firstMessage = False
-
-
-class MessageTransmission(QThread):
-    """
-    Class for a thread that handles outgoing serial messages
-    """
-    def __init__(self, mainWindow):
-        super(MessageTransmission, self).__init__()
-        self.mainWindow = mainWindow
-        self.shouldRun = True
-        self.counter = 0
-        self.firstMessage = True
-
-    def run(self):
-        print("Message Transmission thread started")
-        while self.shouldRun:
-            self.sleep(0.1)
-            if len(self.mainWindow.msgDeque) > 0:
-                self.mainWindow.msgMu.lock()
-                print("deque length: %d" % len(self.mainWindow.msgDeque))
-                self.mainWindow.comm.write(self.mainWindow.msgDeque.popleft())
-                self.mainWindow.msgMu.unlock()
-
-    def stop(self):
-        self.shouldRun = False
-        print("Stopping Message Transmission thread")
 
 
 class ListOfSequencesHandler:
@@ -738,7 +640,7 @@ class Motor:
         """
         self.__goalPosition=pos
         print("%s: %d" % (self.__name, pos))
-        sendMessage(self.__window)
+        self.__window.sendMessage('a')
 
     def getGoalPosition(self):
         """
@@ -817,9 +719,13 @@ class MainWindow(QMainWindow):
         self.setIcon()
         self.msgMu = QMutex()
 
-        # Connect button signals
-        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+        self.numberOfMotors = 6
+        self.s, self.messageSize = makeStruct()
 
+        # Connect button signals
+        self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
+
+        self.ports_list = scanAvailablePorts()
         self.populatePortsList()
 
         # Serial communication
@@ -839,7 +745,7 @@ class MainWindow(QMainWindow):
         # ---------------
         ## Dictionnary of all motor objects
         self.dictMot = dict()
-        for i in range(1, numberOfMotors+1):
+        for i in range(1, self.numberOfMotors+1):
             mot = Motor(self, "motor" + str(i))
             self.dictMot[mot.getName()] = mot
         # ---------------
@@ -867,22 +773,23 @@ class MainWindow(QMainWindow):
             lambda: self.dictMot["motor6"].setGoalPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
-        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+        self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
 
     def connect_port(self):
         """
-        Connect the selected port of the Arduino
+        Connect the selected port of the controller
         :return: None
         """
         commPort = self.ui.portselection.currentText()
-        for index in range(len(ports_list)):
+        for index in range(len(self.ports_list)):
             result = isinstance(commPort, str)
             if not result:
-                commPort = ports_list[index].device
+                commPort = self.ports_list[index].device
         self.comm, self.serialConnected = initSerialConnection(commPort)
         app.aboutToQuit.connect(self.comm.close)
         self.msgReception.start()
         self.msgTransmission.start()
+        self.sendMessage('s')
 
     def setIcon(self):
         """
@@ -907,50 +814,69 @@ class MainWindow(QMainWindow):
         self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
         print("Finished initializing slider positions")
 
+
+
     def populatePortsList(self):
         """
         Populate the available serial ports in the drop down menu
         :return: None
         """
         print("Scanning and populating list of available serial ports")
-        for index in range(len(ports_list)):
-            result = isinstance(ports_list[index], str)
+        for index in range(len(self.ports_list)):
+            result = isinstance(self.ports_list[index], str)
             if not result:
-                self.ui.portselection.addItem(ports_list[index].device)
+                self.ui.portselection.addItem(self.ports_list[index].device)
             else:
-                self.ui.portselection.addItem(ports_list[index])
+                self.ui.portselection.addItem(self.ports_list[index])
+
+    def sendMessage(self, mode):
+        """
+        Package message and send on communication port
+        :param mode: mode in which the message should be interpreted by the controller
+        :return: None
+        """
+        if self.serialConnected:
+            values = (mode.encode(),
+                      self.dictMot["motor1"].getGoalPosition(),
+                      self.dictMot["motor2"].getGoalPosition(),
+                      self.dictMot["motor3"].getGoalPosition(),
+                      self.dictMot["motor4"].getGoalPosition(),
+                      self.dictMot["motor5"].getGoalPosition(),
+                      self.dictMot["motor6"].getGoalPosition(),
+                      b'\0')
+            print("Outgoing: ", end='')
+            print(values)
+            packed_data = self.s.pack(*values)
+            self.msgMu.lock()
+            self.msgDeque.append(packed_data)
+            self.msgMu.unlock()
+        else:
+            print("Error sending message, serial not connected")
+
+    def calibrateVerticalAxis(self):
+        """
+        Trigger vertical axis calibration
+        :return: None
+        """
+        print("Calibrating vertical axis")
+        self.sendMessage('c')
 
 
-# Send message to Arduino containing all motor values
-def sendMessage(mainWindow):
-    """
-    Package message and send on communication port
-    :param mainWindow: mainWindow object
-    :return: None
-    """
-    if mainWindow.serialConnected:
-        values = (mainWindow.dictMot["motor1"].getGoalPosition(),
-                  mainWindow.dictMot["motor2"].getGoalPosition(),
-                  mainWindow.dictMot["motor3"].getGoalPosition(),
-                  mainWindow.dictMot["motor4"].getGoalPosition(),
-                  mainWindow.dictMot["motor5"].getGoalPosition(),
-                  mainWindow.dictMot["motor6"].getGoalPosition(),
-                  b'\0')
-        packed_data = s.pack(*values)
-        mainWindow.msgMu.lock()
-        mainWindow.msgDeque.append(packed_data)
-        mainWindow.msgMu.unlock()
-    else:
-        print("Error sending message, serial not connected")
+def makeStruct():
+    ## Define struct format for communicating messages
+    # message size = 15 bytes
+    # c: mode
+    #       'a' -> absolute (send an absolute position between 0 and 100)
+    #       'i' -> incremental (move from the current position from a certain increment)
+    #       's' -> status (with this mode, the rest of the message is ignored. It's purpose is only for the controller to send it's status)
+    #       'c' -> calibrate vertical axis (rest of the message is ignored)
+    # c: operation mode
+    # 6H: position of all motors
+    # c: end-of-message character
+    structDefinition = 'c6Hc'
+    s = struct.Struct(structDefinition)
+    return s, struct.calcsize(structDefinition)
 
-
-def calibrateVerticalAxis():
-    """
-    Trigger vertical axis calibration
-    :return: None
-    """
-    print("Calibrating vertical axis")
-    # TODO: launch calibration process on controller
 
 
 if __name__ == "__main__":
