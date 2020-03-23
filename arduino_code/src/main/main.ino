@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "dynamixel.h"
 #include "axialMotor.h"
+#include "encoder/Encoder.cpp" 
 
 // Declare constants
 const int MESSAGE_SIZE = 13;
@@ -38,12 +39,13 @@ struct dataPack {
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
-//bool shouldSlowDown(int motorDirection);
-//bool runAxialCalibration(int motorDirection, int* motor);
-//bool setAxialMotorDirection(int directionValue, int* motor);
-//bool checkAxialMotorDirection(int directionValue, int* motor);
-//axialMotor axialMotor(13,-1,47,49,51,53);
+bool shouldSlowDown(int motorDirection);
+bool runAxialCalibration(int motorDirection, int* motor);
+bool setAxialMotorDirection(int directionValue, int* motor);
+bool checkAxialMotorDirection(int directionValue, int* motor);
+axialMotor axialMotor(13,-1,47,49,51,53);
 axialMotor test; //classe test
+Encoder myEnc(2, 3); //classe de lecture de l'encodeur
 
 // Arduino functions
 void setup() {
@@ -54,20 +56,25 @@ void setup() {
   mot3.init();
   dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
   sendMessage(outgoingMessage);
-//  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-//  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-//  pinMode(test.getMotorPin(1),OUTPUT);
-//  pinMode(test.getMotorPin(2),OUTPUT);
-//  pinMode(test.getDrivePin(),OUTPUT);
+  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  pinMode(test.getMotorPin(1),OUTPUT);
+  pinMode(test.getMotorPin(2),OUTPUT);
+  pinMode(test.getDrivePin(),OUTPUT);
 }
-
+long oldPosition  = -999; //variable de départ pour l'encodeur
 void loop() {
-  //test.setEnableDrive(true);
-  //test.setMotorState(-1);
-  //test.runAxialCalibration();
-  //Serial.println("done");
-  //while (1)
-  //{Serial.print(test.getProximitySensorValue(1));}
+  /* long newPosition = myEnc.read();
+  if (newPosition != oldPosition) {
+    oldPosition = newPosition;
+    Serial.println(newPosition);
+  }
+  test.setEnableDrive(true);
+  test.setMotorState(-1);
+  test.runAxialCalibration();
+  Serial.println("done");
+  while (1)*/
+  
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
