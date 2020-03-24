@@ -9,9 +9,9 @@ char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
-Dynamixel mot1(id1, 28);
-Dynamixel mot2(id2, 40);
-Dynamixel mot3(id3, 20);
+Dynamixel mot1(id1, 0.879); //28
+Dynamixel mot2(id2, 0.879, 0); //40
+Dynamixel mot3(id3, 1); //20
 
 
 /**
