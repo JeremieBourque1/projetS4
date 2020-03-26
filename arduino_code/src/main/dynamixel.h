@@ -71,11 +71,12 @@ class Dynamixel {
         //Serial.println(model_number);
         pingSuccess = true;
       }
-      // why 2 awr multiturn
-      dxl_wb.setMultiTurnControlMode(id);
+      // why 2 multiturn
+      dxl_wb.setExtendedPositionControlMode(id);
+      //dxl_wb.writeRegister(uint8_t(221),0x11,0x2,0x4);
       dxl_wb.setNormalDirection(id);
       setJointMode();
-      dxl_wb.setMultiTurnControlMode(id);
+      //dxl_wb.setMultiTurnControlMode(id);
       if(initSuccess && pingSuccess)
       {
         //Serial.print("Motor id: ");
@@ -115,8 +116,8 @@ class Dynamixel {
       */
     void moveMotor(int32_t pos)
     {
-      int goalPos = (pos * gearRatio) - centerZero;
-      dxl_wb.goalPosition(id, goalPos);
+      int32_t goalPos = (pos * gearRatio) - centerZero;
+      dxl_wb.goalPosition(id, (int32_t)goalPos);
       //Serial.println("Dynamixel is moving...");
     }
 

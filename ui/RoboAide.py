@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QThread, QMutex
+from PySide2.QtCore import QRect, Qt, QThread, QMutex, QTimer
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -63,6 +63,10 @@ def initSerialConnection(port):
         ser = serial.Serial(port, 9600, timeout=0.1)
         print("Connected to %s" % port)
         connected = True
+        # Save the last port to the file
+        with open('SavePort.json', 'w') as outfile:
+            json.dump(port, outfile)
+
     except serial.serialutil.SerialException:
         print("Failed to connect to %s." % port)
         ser = None
@@ -72,13 +76,13 @@ def initSerialConnection(port):
 
 def loadSequences(listOfSequenceHandler,motors):
     """
-    To load the saved sequence in the save.json file and put them in the list of sequence
+    To load the saved sequence in the SaveSequence.json file and put them in the list of sequence
     :param listOfSequenceHandler: To add the sequences to the list
     :param motors: the motors of the robotic arm
     :return: No return
     """
     try:
-        with open('save.json') as save:
+        with open('SaveSequence.json') as save:
             savedListOfSequences = json.load(save)
         for sequence in savedListOfSequences:
             for sequenceName in sequence:
@@ -199,7 +203,7 @@ class ListOfSequencesHandler:
         for item in listItems:
             self.__listOfSequences.takeItem(self.__listOfSequences.row(item))
             # Load the save file
-            with open('save.json', 'r') as save_file:
+            with open('SaveSequence.json', 'r') as save_file:
                 savedListOfSequences = json.load(save_file)
             # Search for the sequence that needs to be deleted
             indexSequence = -1
@@ -212,7 +216,7 @@ class ListOfSequencesHandler:
                 savedListOfSequences.pop(indexSequence)
 
             # Rewrite the save file without the deleted sequence
-            with open('save.json', 'w') as save_file:
+            with open('SaveSequence.json', 'w') as save_file:
                 json.dump(savedListOfSequences, save_file)
 
     def createWindow(self, modifySequence = False):
@@ -223,7 +227,7 @@ class ListOfSequencesHandler:
         :return: No return
         """
         if modifySequence:
-            self.__window = CreateSequenceWindow(self.__motors, self, self.getSelectedItems()[0], True)
+            self.__window = CreateSequenceWindow(self.__motors, self, self.getSelectedItem, True)
         else:
             self.__window = CreateSequenceWindow(self.__motors, self, Sequence(self.__motors))
         self.__ui.setEnabled(False)
@@ -250,15 +254,16 @@ class ListOfSequencesHandler:
         """
         self.__ui.setEnabled(True)
 
-    def getSelectedItems(self):
+    def getSelectedItem(self):
         """
         Accessor to the selected items of the list
         :return: the selected items
         """
-        return self.__listOfSequences.selectedItems()
+        # Returns the only item in the list because the list is set to be
+        return self.__listOfSequences.selectedItems()[0]
 
     def playSequence(self):
-        for move in self.getSelectedItems()[0].getMoves():
+        for move in self.getSelectedItem().getMoves():
             for motor in self.__motors:
                 self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
             for motor in self.__motors:
@@ -321,54 +326,15 @@ class CreateSequenceWindow(QDialog):
         ## List of sliders in the create sequence window
         # TODO: put the following in a loop
         self.listOfSliders = []
-        slider1 = QSlider(Qt.Horizontal)
-        slider1.setMaximum(4095)
-        slider1.setValue(motors["motor1"].getCurrentPosition())
-        slider1.valueChanged.connect(
-            lambda: motors["motor1"].setGoalPosition(slider1.value()))
-        self.listOfSliders.append(slider1)
-        slider2 = QSlider(Qt.Horizontal)
-        slider2.setMaximum(4095)
-        slider2.setValue(motors["motor2"].getCurrentPosition())
-        slider2.valueChanged.connect(
-            lambda: motors["motor2"].setGoalPosition(slider2.value()))
-        self.listOfSliders.append(slider2)
-        slider3 = QSlider(Qt.Horizontal)
-        slider3.setMaximum(4095)
-        slider3.setValue(motors["motor3"].getCurrentPosition())
-        slider3.valueChanged.connect(
-            lambda: motors["motor3"].setGoalPosition(slider3.value()))
-        self.listOfSliders.append(slider3)
-        slider4 = QSlider(Qt.Horizontal)
-        slider4.setMaximum(4095)
-        slider4.setValue(motors["motor4"].getCurrentPosition())
-        slider4.valueChanged.connect(
-            lambda: motors["motor4"].setGoalPosition(slider4.value()))
-        self.listOfSliders.append(slider4)
-        slider5 = QSlider(Qt.Horizontal)
-        slider5.setMaximum(4095)
-        slider5.setValue(motors["motor5"].getCurrentPosition())
-        slider5.valueChanged.connect(
-            lambda: motors["motor5"].setGoalPosition(slider5.value()))
-        self.listOfSliders.append(slider5)
-        slider6 = QSlider(Qt.Horizontal)
-        slider6.setMaximum(4095)
-        slider6.setValue(motors["motor6"].getCurrentPosition())
-        slider6.valueChanged.connect(
-            lambda: motors["motor6"].setGoalPosition(slider6.value()))
-        self.listOfSliders.append(slider6)
+        dictOfSlider = dict()
 
-        # dictOfSlider = dict()
-        # for motor in self.__motors:
-        #     dictOfSlider[motor] = QSlider(Qt.Horizontal)
-        #
-        # for motor in self.__motors:
-        #     dictOfSlider[motor].valueChanged.connect(
-        #         lambda: motors[motor].setGoalPosition(dictOfSlider[motor].value()))
-        #     print(motors[motor].getName())
-        #     self.listOfSliders.append(dictOfSlider[motor])
-
-        # self.listOfSliders[3].setValue(50)
+        for motor in self.__motors:
+            dictOfSlider[motor] = QSlider(Qt.Horizontal)
+            dictOfSlider[motor].setMaximum(4095)
+            dictOfSlider[motor].setValue(self.__motors[motor].getCurrentPosition())
+            dictOfSlider[motor].valueChanged.connect(self.__motors[motor].setGoalPosition)
+            print(self.__motors[motor].getName())
+            self.listOfSliders.append(dictOfSlider[motor])
 
         ## Message to make the user put a name to the sequence
         self.__noNameMessage = QMessageBox()
@@ -449,10 +415,10 @@ class CreateSequenceWindow(QDialog):
         if self.__nameEntry.text() != "":
             # Load previously saved sequences
             try:
-                with open('save.json') as save:
+                with open('SaveSequence.json') as save:
                     savedListOfSequences = json.load(save)
             except FileNotFoundError:
-                print("Save file not found")
+                # print("Save file not found")
                 savedListOfSequences = []
             if modifySequence:
                 # Get the item that needs to be modified
@@ -476,7 +442,7 @@ class CreateSequenceWindow(QDialog):
                         savedListOfSequences.insert(indexOfTheSequence,newSequence)
 
                         # Write the sequences to the file
-                        with open('save.json', 'w') as outfile:
+                        with open('SaveSequence.json', 'w') as outfile:
                             json.dump(savedListOfSequences, outfile)
 
                         self.accept()
@@ -494,7 +460,7 @@ class CreateSequenceWindow(QDialog):
                 savedListOfSequences.append(newSequence)
 
                 # Write the sequences to the file
-                with open('save.json', 'w') as outfile:
+                with open('SaveSequence.json', 'w') as outfile:
                     json.dump(savedListOfSequences, outfile)
 
                 self.accept()
@@ -896,6 +862,17 @@ class MainWindow(QMainWindow):
         app.aboutToQuit.connect(self.msgTransmission.stop)
         self.comm = None
         self.serialConnected = None
+        try:
+            with open('SavePort.json') as save:
+                savedPort = json.load(save)
+                for index in range(1,len(ports_list)):
+                    if ports_list[index].device==savedPort:
+                        self.ui.portselection.setCurrentIndex(index)
+                        self.connect_port(savedPort)
+                    else:
+                        print("The last port is not available")
+        except FileNotFoundError:
+            print("SavePort file not found")
         self.ui.portselection.currentIndexChanged.connect(self.connect_port)
 
         ## Outgoing message deque
@@ -937,16 +914,15 @@ class MainWindow(QMainWindow):
         # Connect the tab changed with updating the sliders
         self.ui.tabWidget.currentChanged.connect(self.updateSliderPositions)
 
-    def connect_port(self):
+    def connect_port(self,lastPort=None):
         """
         Connect the selected port of the Arduino
         :return: None
         """
-        commPort = self.ui.portselection.currentText()
-        for index in range(len(ports_list)):
-            result = isinstance(commPort, str)
-            if not result:
-                commPort = ports_list[index].device
+        if isinstance(lastPort, str):
+            commPort = lastPort
+        else:
+            commPort = self.ui.portselection.currentText()
         self.comm, self.serialConnected = initSerialConnection(commPort)
         app.aboutToQuit.connect(self.comm.close)
         self.msgReception.start()
