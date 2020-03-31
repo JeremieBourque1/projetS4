@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QMutex, QTimer,Signal
+from PySide2.QtCore import QRect, Qt, QMutex, QThread
 from PySide2.QtUiTools import QUiLoader
 from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
 from collections import deque
@@ -18,6 +18,7 @@ import warnings
 import struct
 import os
 import json
+import time
 
 
 # To remove the following warning: DeprecationWarning: an integer is required
@@ -31,6 +32,25 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 ## App icon
 icon = 'icon.png'
+
+class playSequence(QThread):
+    def __init__(self,moves,motors):
+        super(playSequence, self).__init__()
+        self.__moves=moves
+        self.__motors=motors
+
+    def run(self):
+        for move in self.__moves:
+            for motor in self.__motors:
+                self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+            for motor in self.__motors:
+                while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition() - 10 \
+                        or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition() + 10:
+                    print("current position:" + str(self.__motors[motor].getCurrentPosition()))
+                    print("goal position:" + str(self.__motors[motor].getGoalPosition()))
+                    self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+                    time.sleep(0.25)
+
 
 def loadSequences(listOfSequenceHandler,motors):
     """
@@ -765,8 +785,8 @@ class MainWindow(QMainWindow):
         try:
             with open('SavePort.json') as save:
                 savedPort = json.load(save)
-                for index in range(1,len(ports_list)):
-                    if ports_list[index].device==savedPort:
+                for index in range(1,len(self.ports_list)):
+                    if self.ports_list[index].device==savedPort:
                         self.ui.portselection.setCurrentIndex(index)
                         self.connect_port(savedPort)
                     else:
