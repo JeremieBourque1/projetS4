@@ -17,14 +17,15 @@ class MessageReception(QThread):
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
-            message = self.mainWindow.comm.read(self.mainWindow.messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
-            if len(message) == self.mainWindow.messageSize+1:
+            message = self.mainWindow.comm.read(self.mainWindow.messageSize)  # TODO: Find out why an extra byte is received (only happens with openCr)
+            if len(message) == self.mainWindow.messageSize:
                 print("message received")
-                unpacked_msg = self.mainWindow.s.unpack(message[:-1])  # Unpack message
+                unpacked_msg = self.mainWindow.s.unpack(message)  # Unpack message
                 print(str(self.counter) + ": ", end='')
                 print(unpacked_msg)
                 self.counter += 1
                 self.setMotorCurrentPosition(unpacked_msg)
+        print("done")
 
     def stop(self):
         self.shouldRun = False

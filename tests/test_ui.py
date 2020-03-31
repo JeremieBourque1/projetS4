@@ -1,11 +1,10 @@
 import unittest
 import sys
-import os
+import time
 
 from ui import RoboAide
+from ui.Communication import initSerialConnection
 from PySide2.QtWidgets import QApplication
-from PySide2.QtTest import QTest
-from PySide2.QtCore import Qt
 
 # based on : https://bitbucket.org/jmcgeheeiv/pyqttestexample/src/default/src/
 
@@ -84,6 +83,47 @@ class TestMainWindow(unittest.TestCase):
         self.testWindow.sendMessage('c')
         expectedResult = self.testWindow.s.pack(b'c', *valueList, b'\0')
         self.assertEqual(self.testWindow.msgDeque[-1], expectedResult)
+
+class TestMessageReception(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+        self.testWindow.comm = dummyComm()
+        self.testWindow.msgReception.start()
+
+    def testRun(self):
+        """
+        Test for reading incoming message and updating the motors' current posisition
+        """
+        self.motorValues = [100, 200, 300, 400, 500, 600]
+        message = self.testWindow.s.pack(b'a', *self.motorValues, b'\0')
+        self.testWindow.comm.loadMessage(message)
+        time.sleep(1)
+        i = 0
+        for motor in self.testWindow.dictMot:
+            self.assertEqual(self.testWindow.dictMot[motor].getCurrentPosition(), self.motorValues[i])
+            i += 1
+
+    def tearDown(self):
+        self.testWindow.msgReception.stop()
+        while self.testWindow.msgReception.isRunning():  # Make sure the thread has exited before continuing tests
+            pass
+
+
+class dummyComm:
+    def __init__(self, message=""):
+        self.message = message
+
+    def loadMessage(self, message):
+        self.message = message
+
+    def read(self, messageSize):
+        timeout = time.time() + 0.1
+        while len(self.message) != messageSize and time.time() < timeout:
+            pass
+        tempMsg = self.message
+        self.message = ""
+        return tempMsg
 
 
 if __name__ == '__main__':
