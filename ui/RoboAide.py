@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QThread, QMutex, QTimer
+from PySide2.QtCore import QRect, Qt, QThread, QMutex, QTimer,Signal
 from PySide2.QtUiTools import QUiLoader
 import sys
 import warnings
@@ -156,12 +156,29 @@ class MessageTransmission(QThread):
         self.shouldRun = False
         print("Stopping Message Transmission thread")
 
+class playSequence(QThread):
+    def __init__(self,moves,motors):
+        super(playSequence, self).__init__()
+        self.__moves=moves
+        self.__motors=motors
+
+    def run(self):
+        for move in self.__moves:
+            for motor in self.__motors:
+                self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+            for motor in self.__motors:
+                while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition() - 10 \
+                        or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition() + 10:
+                    print("current position:" + str(self.__motors[motor].getCurrentPosition()))
+                    print("goal position:" + str(self.__motors[motor].getGoalPosition()))
+                    self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+                    time.sleep(0.25)
 
 class ListOfSequencesHandler:
     """
     Handler for the list of sequences
     """
-    def __init__(self, ui, motors = {}):
+    def __init__(self, ui, motors):
         """
         Initializtion of the handler for the list of sequences
         :param ui: The ui in which the list of sequence is in
@@ -178,6 +195,8 @@ class ListOfSequencesHandler:
         self.__ui = ui
         ## The window in which the new sequence will be created
         self.__window = None
+        ## Thread to send the sequence to the motors
+        self.playSequenceThread = None
 
         # Create a new window when the create sequence button is clicked
         self.__createSequenceButton.clicked.connect(self.createWindow)
@@ -227,7 +246,7 @@ class ListOfSequencesHandler:
         :return: No return
         """
         if modifySequence:
-            self.__window = CreateSequenceWindow(self.__motors, self, self.getSelectedItem, True)
+            self.__window = CreateSequenceWindow(self.__motors, self, self.getSelectedItems()[0], True)
         else:
             self.__window = CreateSequenceWindow(self.__motors, self, Sequence(self.__motors))
         self.__ui.setEnabled(False)
@@ -254,25 +273,17 @@ class ListOfSequencesHandler:
         """
         self.__ui.setEnabled(True)
 
-    def getSelectedItem(self):
+    def getSelectedItems(self):
         """
         Accessor to the selected items of the list
         :return: the selected items
         """
         # Returns the only item in the list because the list is set to be
-        return self.__listOfSequences.selectedItems()[0]
+        return self.__listOfSequences.selectedItems()
 
     def playSequence(self):
-        for move in self.getSelectedItem().getMoves():
-            for motor in self.__motors:
-                self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
-            for motor in self.__motors:
-                while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition()-10\
-                        or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition()+10:
-                    print("current position:" + str(self.__motors[motor].getCurrentPosition()))
-                    print("goal position:" + str(self.__motors[motor].getGoalPosition()))
-                    self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
-                    time.sleep(0.25)
+        self.playSequenceThread = playSequence(self.getSelectedItems()[0].getMoves(), self.__motors)
+        self.playSequenceThread.start()
 
 class CreateSequenceWindow(QDialog):
     """
@@ -767,7 +778,9 @@ class Motor:
         :param pos: the position
         :return: No return
         """
+        self.mu.lock()
         self.__goalPosition=pos
+        self.mu.unlock()
         print("%s: %d" % (self.__name, pos))
         sendMessage(self.__window)
 
@@ -776,7 +789,10 @@ class Motor:
         Accessor of the goal position
         :return: The goal position of the motor
         """
-        return self.__goalPosition
+        self.mu.lock()
+        pos = self.__goalPosition
+        self.mu.unlock()
+        return pos
 
     def setCurrentPosition(self, pos):
         """
