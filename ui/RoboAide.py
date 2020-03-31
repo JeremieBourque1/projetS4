@@ -55,7 +55,6 @@ def loadSequences(listOfSequenceHandler,motors):
     except FileNotFoundError:
         print("Save file not found")
 
-
 class ListOfSequencesHandler:
     """
     Handler for the list of sequences
@@ -70,6 +69,7 @@ class ListOfSequencesHandler:
         self.__motors = motors
         ## The list of sequence
         self.__listOfSequences = ui.listOfSequences
+        self.__listOfSequences.itemDoubleClicked.connect(self.playSequence)
         ## The create a new sequence button
         self.__createSequenceButton = ui.createSequenceButton
         ## The ui in which the list of sequence is in
@@ -159,6 +159,18 @@ class ListOfSequencesHandler:
         """
         return self.__listOfSequences.selectedItems()
 
+    def playSequence(self):
+        for move in self.getSelectedItems()[0].getMoves():
+            for motor in self.__motors:
+                self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+            for motor in self.__motors:
+                while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition()-10\
+                        or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition()+10:
+                    print("current position:" + str(self.__motors[motor].getCurrentPosition()))
+                    print("goal position:" + str(self.__motors[motor].getGoalPosition()))
+                    self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+                    time.sleep(0.25)
+
 class CreateSequenceWindow(QDialog):
     """
     Window for creating a new sequence
@@ -187,7 +199,7 @@ class CreateSequenceWindow(QDialog):
         self.__wantedPositions = {}
         ## The layout of the create sequence window
         self.__layout = QVBoxLayout(self)
-        ## The widget for the name of the sequence
+        ## The widget for the name of the sequenc
         self.__nameEntry = QLineEdit()
         self.__nameEntry.setText(self.__sequence.getName())
         ## The label for the widget in which the name of the sequence is written
@@ -209,13 +221,56 @@ class CreateSequenceWindow(QDialog):
 
         # Put the sliders of the create sequence window in a list
         ## List of sliders in the create sequence window
+        # TODO: put the following in a loop
         self.listOfSliders = []
-        for motor in self.__motors:
-            slider = QSlider()
-            slider.setOrientation(Qt.Horizontal)
-            slider.valueChanged.connect(
-                lambda: self.__motors[motor].setGoalPosition(slider.value()))
-            self.listOfSliders.append(slider)
+        slider1 = QSlider(Qt.Horizontal)
+        slider1.setMaximum(4095)
+        slider1.setValue(motors["motor1"].getCurrentPosition())
+        slider1.valueChanged.connect(
+            lambda: motors["motor1"].setGoalPosition(slider1.value()))
+        self.listOfSliders.append(slider1)
+        slider2 = QSlider(Qt.Horizontal)
+        slider2.setMaximum(4095)
+        slider2.setValue(motors["motor2"].getCurrentPosition())
+        slider2.valueChanged.connect(
+            lambda: motors["motor2"].setGoalPosition(slider2.value()))
+        self.listOfSliders.append(slider2)
+        slider3 = QSlider(Qt.Horizontal)
+        slider3.setMaximum(4095)
+        slider3.setValue(motors["motor3"].getCurrentPosition())
+        slider3.valueChanged.connect(
+            lambda: motors["motor3"].setGoalPosition(slider3.value()))
+        self.listOfSliders.append(slider3)
+        slider4 = QSlider(Qt.Horizontal)
+        slider4.setMaximum(4095)
+        slider4.setValue(motors["motor4"].getCurrentPosition())
+        slider4.valueChanged.connect(
+            lambda: motors["motor4"].setGoalPosition(slider4.value()))
+        self.listOfSliders.append(slider4)
+        slider5 = QSlider(Qt.Horizontal)
+        slider5.setMaximum(4095)
+        slider5.setValue(motors["motor5"].getCurrentPosition())
+        slider5.valueChanged.connect(
+            lambda: motors["motor5"].setGoalPosition(slider5.value()))
+        self.listOfSliders.append(slider5)
+        slider6 = QSlider(Qt.Horizontal)
+        slider6.setMaximum(4095)
+        slider6.setValue(motors["motor6"].getCurrentPosition())
+        slider6.valueChanged.connect(
+            lambda: motors["motor6"].setGoalPosition(slider6.value()))
+        self.listOfSliders.append(slider6)
+
+        # dictOfSlider = dict()
+        # for motor in self.__motors:
+        #     dictOfSlider[motor] = QSlider(Qt.Horizontal)
+        #
+        # for motor in self.__motors:
+        #     dictOfSlider[motor].valueChanged.connect(
+        #         lambda: motors[motor].setGoalPosition(dictOfSlider[motor].value()))
+        #     print(motors[motor].getName())
+        #     self.listOfSliders.append(dictOfSlider[motor])
+
+        # self.listOfSliders[3].setValue(50)
 
         ## Message to make the user put a name to the sequence
         self.__noNameMessage = QMessageBox()
@@ -414,7 +469,14 @@ class CreateSequenceWindow(QDialog):
         :param moveItem: the move that was double clicked
         :return: No return
         """
-        moveItem.doubleClickEvent()
+        moveItem.goToMoveOfTheLabel()
+        self.updateSlidersPositions()
+
+    def updateSlidersPositions(self):
+        counterMotors = 0
+        for motor in self.__motors:
+            self.listOfSliders[counterMotors].setValue(self.__motors[motor].getGoalPosition())
+            counterMotors += 1
 
     def enableWindow(self):
         """
@@ -466,6 +528,8 @@ class CreateSequenceWindow(QDialog):
         moveToModify = label.getMove()
         moveToModify.isNew = False
         label.setBackground(QBrush(Qt.darkCyan))
+        label.goToMoveOfTheLabel()
+        self.updateSlidersPositions()
 
 class moveLabel(QListWidgetItem):
     """
@@ -486,14 +550,13 @@ class moveLabel(QListWidgetItem):
         self.__motors = motors
         self.setText(text)
 
-    def doubleClickEvent(self):
+    def goToMoveOfTheLabel(self):
         """
         Handles the event when the move lable is double clicked
-        :return: No return
+        :return: No return1
         """
-        # TODO: make the motors move to their respective positions
-        for motor in self.__motors:
-            print(motor + " "+ str(self.__move.getMotorPosition(motor)))
+        self.__move.goToMove()
+
 
     def getMove(self):
         """
@@ -586,9 +649,7 @@ class Move:
         :param position: The position of the motor
         :return: Return None if succesful and an error string if not
         """
-        #TODO: call setPosition when the slider moves and not when next move is clicked
         if motorName in self.__motors:
-            #self.__motors[motorName].setPosition(position)
             self.__movePositions[motorName] = position
             return None
         else:
@@ -607,6 +668,10 @@ class Move:
 
     def getMovePositions(self):
         return self.__movePositions
+
+    def goToMove(self):
+        for motor in self.__motors:
+            self.__motors[motor].setGoalPosition(self.getMotorPosition(motor))
 
 class Motor:
     """
@@ -750,7 +815,7 @@ class MainWindow(QMainWindow):
             self.dictMot[mot.getName()] = mot
         # ---------------
 
-        self.initializeSliderPositions()
+        self.updateSliderPositions()
 
         ## ListOfSequencesHandler object
         self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
@@ -774,6 +839,9 @@ class MainWindow(QMainWindow):
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
+
+        # Connect the tab changed with updating the sliders
+        self.ui.tabWidget.currentChanged.connect(self.updateSliderPositions)
 
     def connect_port(self):
         """
@@ -799,20 +867,20 @@ class MainWindow(QMainWindow):
         appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
-    def initializeSliderPositions(self):
+    def updateSliderPositions(self,index = 0):
         """
         Initialize motor slider positions
         :return: None
         """
-        print("Initializing motor slider positions")
-        # TODO: get the position value for each motor
-        self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
-        self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
-        self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
-        self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
-        self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
-        self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
-        print("Finished initializing slider positions")
+        if index == 0:
+            print("Initializing motor slider positions")
+            self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
+            self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
+            self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
+            self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
+            self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
+            self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
+            print("Finished initializing slider positions")
 
 
 

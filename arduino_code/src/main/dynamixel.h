@@ -15,12 +15,15 @@ class Dynamixel {
     int id;
     //! Gear ratio for the motor's joint
     float gearRatio;
+    //! To center the 0
+    float centerZero;
 
   public:
-    Dynamixel(int idNumber, float ratio=1)
+    Dynamixel(int idNumber, float ratio=1, float center = 0)
     {
       id = idNumber;
       gearRatio = ratio; 
+      centerZero = center;
     }
 
     ~Dynamixel()
@@ -68,6 +71,7 @@ class Dynamixel {
         //Serial.println(model_number);
         pingSuccess = true;
       }
+      // why 2 awr multiturn
       dxl_wb.setMultiTurnControlMode(id);
       dxl_wb.setNormalDirection(id);
       setJointMode();
@@ -91,7 +95,7 @@ class Dynamixel {
     {
       const char *log;
       bool result = false;
-      result = dxl_wb.jointMode(id, 100, 0, &log);
+      result = dxl_wb.jointMode(id, 150, 10, &log);
       if (result == false)
       {
         //Serial.println(log);
@@ -111,7 +115,7 @@ class Dynamixel {
       */
     void moveMotor(int32_t pos)
     {
-      int goalPos = pos * gearRatio;
+      int goalPos = (pos * gearRatio) - centerZero;
       dxl_wb.goalPosition(id, goalPos);
       //Serial.println("Dynamixel is moving...");
     }
@@ -123,7 +127,7 @@ class Dynamixel {
     {
       int32_t data;
       dxl_wb.getPresentPositionData(id, &data);
-      uint16_t pos = data/gearRatio;
+      uint16_t pos = (data+ centerZero)/gearRatio;
       return pos; 
     }
 };

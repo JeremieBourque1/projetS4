@@ -153,6 +153,11 @@ void axialMotor::setMotorState(int stateValue)
        digitalWrite(getMotorPin(2),HIGH);
        digitalWrite(getMotorPin(1),LOW);
      }
+       /* for(int motorValue = 0 ; motorValue <= 255; motorValue +=5)  //CECI EST A ADAPTER POUR ANALOG
+        {
+          analogWrite(motorPin, motorValue); 
+          delay(30);    
+        } */
      
   else if (motorState == -1)
      {
