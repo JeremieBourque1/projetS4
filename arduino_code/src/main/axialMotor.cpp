@@ -10,7 +10,6 @@
 axialMotor::axialMotor(int enAPinValue, int motorInitialState,int pinCWOutputValue, int pinCCWOutputValue, int proxSensor1Value,int proxSensor2Value,int pinEncoderL,int pinEncoderR)
 {
   motorState = motorInitialState;
-  //setMotorState(motorState);
   enAPin = enAPinValue;
   pinCWOutput = pinCWOutputValue;
   pinCCWOutput = pinCCWOutputValue;  
@@ -26,7 +25,6 @@ axialMotor::axialMotor(int enAPinValue, int motorInitialState,int pinCWOutputVal
 axialMotor::axialMotor()
 {
   motorState = -1;
-  //setMotorState(motorState);
   enAPin = 53;
   pinCWOutput = A1;
   pinCCWOutput = A2;  
@@ -44,44 +42,44 @@ axialMotor::~axialMotor()
 /** \brief Checks if the requirement to make the motor stop are met. 
  *  /return bool : value confirming if the motor should slow down or not.
  */
-bool axialMotor::shouldSlowDown()
+bool axialMotor::shouldSlowDown(int pin)
 {
- int proximitySensor1Reading = digitalRead(getProximitySensorPin(1)); //defines the input to pins #51. The input is HIGH when nothing is capted this is the top sensor
-  //Serial.print("la valeur de proximite est de :");
-  //Serial.print(proximitySensor1Reading);
-  if (proximitySensor1Reading == false && getMotorState() == true || getMotorState() == -1)
-  {
-   // Serial.print("Je lis le capteur et le moteur monte");
-    return true;
-  }
+ int proximitySensorReading = digitalRead(pin); // The input is HIGH when nothing is capted this is the top sensor
 
-  else if (proximitySensor1Reading == false && getMotorState() == false)
+  if (pin == getProximitySensorPin(1))
   {
-    //Serial.print("Je lis le capteur et le moteur DESCEND");
-    return false;
-  }
-  else
-  {
-    return false;
-  }
- int proximitySensor2Reading = digitalRead(getProximitySensorPin(2)); //defines the input to pin #53. The input is HIGH when nothing is capted
- //Serial.print("TU ENTRE EN CAPTEUR 2!");
-
-  if (proximitySensor2Reading == false && getMotorState() == true)
-  {
-  //  Serial.print("CAPTEUR 2 UNDER CONSTRUCTION");
-    return false;
-  }
-
-  else if (proximitySensor2Reading == false && getMotorState() == false || getMotorState() == -1)
-  {
-   // Serial.print("CAPTEUR 2 UNDER CONSTRUCTION");
-    return true;
-  }
+    if (proximitySensorReading == 0 && getMotorState() == 1 )
+    {
+      return true;
+    }
   
-  else
+    else if (proximitySensorReading == 0 && (getMotorState() == 0  || getMotorState() == -1))
+    {
+      return false;
+    }
+    
+    else
+    {
+      return false;
+    }
+  }
+
+  else if (pin == getProximitySensorPin(2))
   {
-    return false;
+    if (proximitySensorReading == 0 && (getMotorState() == 1  || getMotorState() == -1))
+    {
+      return false;
+    }
+  
+    else if (proximitySensorReading == 0 && getMotorState() == 0 )
+    {
+      return true;
+    }
+    
+    else
+    {
+      return false;
+    }
   }
 }
 
@@ -91,30 +89,27 @@ bool axialMotor::shouldSlowDown()
   * \param ProxSensor2Value : Pin value of the second proximity sensor.
   * \return bool : Boolean value verifying the end of the calibration sequence.
   */
-bool axialMotor::runAxialCalibration()
+int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
 {
-    setMotorState(1);
-    int newPosition = 0;
-    //Serial.print("le moteur tourne maintenant");
-    while (shouldSlowDown() == false)
+    if (newCase == 0)
     {
-      
-       if (shouldSlowDown() == true)
-        {
-           Serial.println(homePosition);
-           setMotorState(-1);
-           return true; 
-        }
-        
-       newPosition = enc->read();
-       if (newPosition != homePosition) 
-      {
-         homePosition = newPosition;
-         //Serial.println(newPosition);
-      }
+      setMotorState(1);
+      Serial.println(getMotorState());
+      return 1;
     }
-  return false;
-
+    
+    else if (newCase == 1)
+    {  
+      setMotorState(-1);
+      Serial.println(getMotorState());
+      homePosition = newHomePosition;
+      Serial.println(homePosition);
+      return -1; 
+    }
+    else
+    {
+      return -2;
+    }
 }
 
 /** \brief Sets the motor state value to a given value of 0,1 or -1. If the value is not in this range, the function forces -1. It then changes the pin output to the motor accordingly
@@ -179,7 +174,7 @@ int axialMotor::getMotorState()
  *  \param sensorNumber : Boolean value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
  *  \return int : Returns the pin number.
  */
-int axialMotor::getProximitySensorPin(bool sensorNumber)
+int axialMotor::getProximitySensorPin(int sensorNumber)
 {
   if (sensorNumber == 1)
   {
@@ -196,7 +191,7 @@ int axialMotor::getProximitySensorPin(bool sensorNumber)
  *  \param sensorNumber : Boolean value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
  *  \return int : actual value given off by the sensor.
  */
-int axialMotor::getProximitySensorValue(bool sensorNumber)
+int axialMotor::getProximitySensorValue(int sensorNumber)
 {
   if (sensorNumber == 1)
   {

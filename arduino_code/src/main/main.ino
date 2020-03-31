@@ -39,10 +39,9 @@ struct dataPack {
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
-bool shouldSlowDown(int motorDirection);
-bool runAxialCalibration(int motorDirection, int* motor);
-bool setAxialMotorDirection(int directionValue, int* motor);
-bool checkAxialMotorDirection(int directionValue, int* motor);
+void trigShouldSlowDownPin1();
+void trigShouldSlowDownPin2();
+
 //axialMotor axialMotor(13,-1,A1,A2,51,53,2,3);
 axialMotor test; //classe test
 //Encoder myEnc(2, 3); //classe de lecture de l'encodeur
@@ -56,8 +55,11 @@ void setup() {
 //  mot3.init();
 //  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
 //  sendMessage(outgoingMessage);
+
   pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
   pinMode(test.getMotorPin(1),OUTPUT);
   pinMode(test.getMotorPin(2),OUTPUT);
   pinMode(test.getDrivePin(),OUTPUT);
@@ -66,21 +68,58 @@ void setup() {
   digitalWrite(38,HIGH); //power for the drive
 }
 int oldPosition=-999;
+int calibrationCase = -1;
+bool slowItTOP = false;
+bool slowItBOT = false;
 
 void loop() {
-long newPosition = test.enc->read();
-
-  if (newPosition != oldPosition) 
-  {
-    oldPosition = newPosition;
-    Serial.println(newPosition);
-  }/*
-  test.setEnableDrive(true);
-  test.setMotorState(-1);
-  test.runAxialCalibration();
-  Serial.println("done");
-  while (1)*/
   
+long encPosition = test.enc->read();
+
+  if (encPosition != oldPosition) 
+  {
+    Serial.println(encPosition);
+    oldPosition = encPosition;
+  }
+
+  test.setEnableDrive(true);
+  test.setMotorState(1);
+
+  if (calibrationCase == 0)
+  {
+      Serial.println("Calibration case = 0");
+    calibrationCase = test.runAxialCalibration(calibrationCase,encPosition);
+    Serial.println("ÉTAPE 1");
+    Serial.println(calibrationCase);
+  }
+  if (calibrationCase == 1 && slowItTOP == true)
+  {
+    Serial.println("Calibration case = 1");
+    calibrationCase = test.runAxialCalibration(calibrationCase,encPosition);
+    Serial.println(calibrationCase);
+  }
+
+  if (test.getProximitySensorValue(1) == 0)
+  {
+   // Serial.println(test.getProximitySensorValue(test.getProximitySensorPin(1)));
+    //Serial.println("le sensor du TOP est actif!");
+    slowItTOP = false;
+  }
+  
+  if (test.getProximitySensorValue(2) == 0)
+  {
+    //Serial.println(test.getProximitySensorValue(2);
+    //Serial.println("le sensor du bas est actif!");
+    slowItBOT = false;
+  }
+ /* if (test.shouldSlowDown(test.getProximitySensorPin(1)) == true || test.shouldSlowDown(test.getProximitySensorPin(2)) == true)
+  {
+    //Serial.println("J'arrete le moteur car je m'y en approche dangereusement");
+    test.setMotorState(-1);
+  }*/
+ 
+   //Serial.println(test.getProximitySensorValue(1));
+  // Serial.println(test.getProximitySensorValue(2));
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
@@ -164,4 +203,18 @@ bool readDataToStruct(dataPack *data)
 void sendMessage(dataPack message)
 {
   Serial.write((byte*)&message, sizeof(message));
+}
+
+void trigShouldSlowDownPin1()
+{
+    Serial.println("ICITTE1");
+    slowItTOP = true;
+
+}
+
+void trigShouldSlowDownPin2()
+{
+    Serial.println("ICITTE2");
+    slowItBOT = true;
+
 }

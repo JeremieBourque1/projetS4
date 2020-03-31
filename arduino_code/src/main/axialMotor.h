@@ -6,14 +6,14 @@ class axialMotor
   axialMotor(int enAPin, int motorInitialState,int pinCWOutputValue, int pinCCWOutputValue, int ProxSensor1Value,int ProxSensor2Value,int pinEncoderL,int pinEncoderR);
   axialMotor();
   ~axialMotor();
-  bool shouldSlowDown();
-  bool runAxialCalibration();
+  bool shouldSlowDown(int pin);
+  int runAxialCalibration(int cas,int newHomePosition);
   void setMotorState(int stateValue);
   void setEnableDrive(bool driveValue);
   int getMotorState();
   int getDriveState();
-  int getProximitySensorPin(bool sensorNumber);
-  int getProximitySensorValue(bool sensorNumber);
+  int getProximitySensorPin(int sensorNumber);
+  int getProximitySensorValue(int sensorNumber);
   int getMotorPin(int directionNumber);
   int getDrivePin();
   bool goToPosition(int positionRequired);
