@@ -773,31 +773,6 @@ class MainWindow(QMainWindow):
         self.ports_list = scanAvailablePorts()
         self.populatePortsList()
 
-        # Serial communication
-        ## Message reception QThread object
-        self.msgReception = MessageReception(self)
-        ## Message transmission QThread object
-        self.msgTransmission = MessageTransmission(self)
-        app.aboutToQuit.connect(self.msgReception.stop)
-        app.aboutToQuit.connect(self.msgTransmission.stop)
-        self.comm = None
-        self.serialConnected = None
-        try:
-            with open('SavePort.json') as save:
-                savedPort = json.load(save)
-                for index in range(1,len(self.ports_list)):
-                    if self.ports_list[index].device==savedPort:
-                        self.ui.portselection.setCurrentIndex(index)
-                        self.connect_port(savedPort)
-                    else:
-                        print("The last port is not available")
-        except FileNotFoundError:
-            print("SavePort file not found")
-        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
-
-        ## Outgoing message deque
-        self.msgDeque = deque(maxlen=3)
-
         # ---------------
         ## Dictionnary of all motor objects
         self.dictMot = dict()
@@ -833,6 +808,30 @@ class MainWindow(QMainWindow):
 
         # Connect the tab changed with updating the sliders
         self.ui.tabWidget.currentChanged.connect(self.updateSliderPositions)
+
+        # Serial communication
+        ## Outgoing message deque
+        self.msgDeque = deque(maxlen=3)
+        ## Message reception QThread object
+        self.msgReception = MessageReception(self)
+        ## Message transmission QThread object
+        self.msgTransmission = MessageTransmission(self)
+        app.aboutToQuit.connect(self.msgReception.stop)
+        app.aboutToQuit.connect(self.msgTransmission.stop)
+        self.comm = None
+        self.serialConnected = None
+        try:
+            with open('SavePort.json') as save:
+                savedPort = json.load(save)
+                for index in range(1,len(self.ports_list)):
+                    if self.ports_list[index].device==savedPort:
+                        self.ui.portselection.setCurrentIndex(index)
+                        self.connect_port(savedPort)
+                    else:
+                        print("The last port is not available")
+        except FileNotFoundError:
+            print("SavePort file not found")
+        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
 
     def connect_port(self,lastPort=None):
         """

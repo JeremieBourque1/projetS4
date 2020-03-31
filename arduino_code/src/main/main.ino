@@ -13,8 +13,8 @@ const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
 Dynamixel mot1(id1, 0.879); //28
-Dynamixel mot2(id2, 0.879, 0); //40
-Dynamixel mot3(id3, 2); //20
+Dynamixel mot2(id2, 0.879); //40
+Dynamixel mot3(id3, 1); //20
 
 
 /**
@@ -74,7 +74,7 @@ void loop() {
   test.runAxialCalibration();
   Serial.println("done");
   while (1)*/
-  
+
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
@@ -111,7 +111,7 @@ void loop() {
 
 
 
-      dataPack outgoingMessage{b'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, b'\0'};
+      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
       sendMessage(outgoingMessage);
     }
     else
@@ -191,4 +191,3 @@ void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_
 {
   //TODO
 }
-

@@ -1,7 +1,7 @@
 from PySide2.QtCore import QThread
 import serial
 import serial.tools.list_ports
-
+import struct
 
 class MessageReception(QThread):
     """
@@ -17,10 +17,10 @@ class MessageReception(QThread):
     def run(self):
         print("Message Reception thread started")
         while self.shouldRun:
-            message = self.mainWindow.comm.read(self.messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
-            if len(message) == self.messageSize+1:
+            message = self.mainWindow.comm.read(self.mainWindow.messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
+            if len(message) == self.mainWindow.messageSize+1:
                 print("message received")
-                unpacked_msg = self.s.unpack(message[:-1])  # Unpack message
+                unpacked_msg = self.mainWindow.s.unpack(message[:-1])  # Unpack message
                 print(str(self.counter) + ": ", end='')
                 print(unpacked_msg)
                 self.counter += 1
@@ -31,10 +31,10 @@ class MessageReception(QThread):
         print("Stopping Message Reception thread")
 
     def setMotorCurrentPosition(self, msg):
-        for i in range(self.numberOfMotors):
-            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
+        for i in range(self.mainWindow.numberOfMotors):
+            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i+1])
         if self.firstMessage:
-            self.mainWindow.initializeSliderPositions()
+            self.mainWindow.updateSliderPositions()
             self.firstMessage = False
 
 
@@ -52,7 +52,7 @@ class MessageTransmission(QThread):
     def run(self):
         print("Message Transmission thread started")
         while self.shouldRun:
-            self.sleep(0.1)
+            self.msleep(500)
             if len(self.mainWindow.msgDeque) > 0:
                 self.mainWindow.msgMu.lock()
                 print("deque length: %d" % len(self.mainWindow.msgDeque))
