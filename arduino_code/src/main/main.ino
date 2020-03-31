@@ -1,7 +1,10 @@
 #include <Arduino.h>
 #include "dynamixel.h"
 #include "axialMotor.h"
-#include "encoder/Encoder.cpp" 
+// We used those links to modify encoder.cpp
+//https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
+//http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
+#include "encoder/Encoder.cpp"
 
 // Declare constants
 const int MESSAGE_SIZE = 15;
@@ -11,7 +14,7 @@ const int id1 = 222;
 const int id2 = 223;
 Dynamixel mot1(id1, 0.879); //28
 Dynamixel mot2(id2, 0.879, 0); //40
-Dynamixel mot3(id3, 1); //20
+Dynamixel mot3(id3, 2); //20
 
 
 /**
@@ -43,14 +46,8 @@ void readMessage(char *message);
 void sendMessage(dataPack message);
 void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
-bool shouldSlowDown(int motorDirection);
-bool runAxialCalibration(int motorDirection, int* motor);
-bool setAxialMotorDirection(int directionValue, int* motor);
-bool checkAxialMotorDirection(int directionValue, int* motor);
-axialMotor axialMotor(13,-1,47,49,51,53);
-axialMotor test; //classe test
-Encoder myEnc(2, 3); //classe de lecture de l'encodeur
 
+// Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   while (!Serial);
@@ -59,11 +56,11 @@ void setup() {
   mot3.init();
   dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
   sendMessage(outgoingMessage);
-  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(test.getMotorPin(1),OUTPUT);
-  pinMode(test.getMotorPin(2),OUTPUT);
-  pinMode(test.getDrivePin(),OUTPUT);
+  //pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  //pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  //pinMode(test.getMotorPin(1),OUTPUT);
+  //pinMode(test.getMotorPin(2),OUTPUT);
+  //pinMode(test.getDrivePin(),OUTPUT);
 }
 long oldPosition  = -999; //variable de départ pour l'encodeur
 void loop() {

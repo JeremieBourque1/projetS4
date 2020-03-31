@@ -278,6 +278,19 @@
   #define CORE_INT12_PIN	12
   #define CORE_INT13_PIN	13
 
+//OpenCR
+#elif defined(__OPENCR__) || defined(__OPENCM904__)
+  #define CORE_NUM_INTERRUPT	9
+  #define CORE_INT0_PIN		0
+  #define CORE_INT1_PIN		1
+  #define CORE_INT2_PIN		2
+  #define CORE_INT3_PIN		3
+  #define CORE_INT4_PIN		4
+  #define CORE_INT5_PIN		5
+  #define CORE_INT6_PIN		6
+  #define CORE_INT7_PIN		7
+  #define CORE_INT8_PIN		8
+
 #endif
 #endif
 
