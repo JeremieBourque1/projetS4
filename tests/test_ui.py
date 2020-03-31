@@ -109,10 +109,31 @@ class TestMessageReception(unittest.TestCase):
         while self.testWindow.msgReception.isRunning():  # Make sure the thread has exited before continuing tests
             pass
 
+class TestMessageTransmission(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+        self.testWindow.comm = dummyComm()
+        self.testWindow.msgTransmission.start()
+
+    def testRun(self):
+        # Add a message to the msgDeque
+        motorValues = [100, 200, 300, 400, 500, 600]
+        message = self.testWindow.s.pack(b'a', *motorValues, b'\0')
+        self.testWindow.msgDeque.append(message)
+        time.sleep(1)
+        self.assertEqual(self.testWindow.comm.lastSentMessage, message)
+
+    def tearDown(self):
+        self.testWindow.msgTransmission.stop()
+        while self.testWindow.msgTransmission.isRunning():  # Make sure the thread has exited before continuing tests
+            pass
+
 
 class dummyComm:
     def __init__(self, message=""):
         self.message = message
+        self.lastSentMessage = None
 
     def loadMessage(self, message):
         self.message = message
@@ -124,6 +145,9 @@ class dummyComm:
         tempMsg = self.message
         self.message = ""
         return tempMsg
+
+    def write(self, message):
+        self.lastSentMessage = message
 
 
 if __name__ == '__main__':
