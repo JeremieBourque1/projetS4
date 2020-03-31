@@ -11,7 +11,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout,
 from PySide2.QtGui import QIcon, QBrush
 from PySide2.QtCore import QRect, Qt, QMutex
 from PySide2.QtUiTools import QUiLoader
-from Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
 from collections import deque
 import sys
 import warnings
