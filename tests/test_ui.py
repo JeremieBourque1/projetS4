@@ -55,5 +55,36 @@ class TestMotor(unittest.TestCase):
         self.testMotor.setName("Nom")
         self.assertEqual(self.testMotor.getName(),"Nom")
 
+class TestMainWindow(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+
+    def test_sendMessage(self):
+        # This test needs to be updated everytime the struct is modified.
+        # More specifically, every instance of expectedResult needs to be updated.
+        # send absolute move message for every motor
+        i = 0
+        valueList = [0, 0, 0, 0, 0, 0]
+        for motor in self.testWindow.dictMot:
+            value = 100 * (i+1)
+            valueList[i] = value
+            print(*valueList)
+            self.testWindow.dictMot[motor].setGoalPosition(value)  # Every time a goal is set, a message is sent
+            expectedResult = self.testWindow.s.pack(b'a', *valueList, b'\0')
+            self.assertEqual(self.testWindow.msgDeque[-1], expectedResult)
+            i += 1
+
+        # send status message
+        self.testWindow.sendMessage('s')
+        expectedResult = self.testWindow.s.pack(b's', *valueList, b'\0')
+        self.assertEqual(self.testWindow.msgDeque[-1], expectedResult)
+
+        # send calibration message
+        self.testWindow.sendMessage('c')
+        expectedResult = self.testWindow.s.pack(b'c', *valueList, b'\0')
+        self.assertEqual(self.testWindow.msgDeque[-1], expectedResult)
+
+
 if __name__ == '__main__':
     unittest.main()
