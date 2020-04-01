@@ -9,7 +9,7 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QMutex, QThread
+from PySide2.QtCore import QRect, Qt, QMutex, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
 from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
 from collections import deque
@@ -34,10 +34,23 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 icon = 'icon.png'
 
 class playSequence(QThread):
-    def __init__(self,moves,motors):
+    """
+    Tread to send the different positions to the motors during a sequence
+    """
+    def __init__(self,moves,motors, listOfSequencesHandler, mainWindow):
+        """
+        Initialization of the play sequence thread
+        :param moves: the moves of the sequence containing the different positions to reach
+        :param motors: the motors of the robot
+        :param listOfSequencesHandler: the handler of the different sequences
+        :param mainWindow: the main window of the UI
+        """
         super(playSequence, self).__init__()
         self.__moves=moves
         self.__motors=motors
+        self.__listOfSequencesHandler = listOfSequencesHandler
+        self.__mainWindow = mainWindow
+        self.finished.connect(self.stop)
 
     def run(self):
         for move in self.__moves:
@@ -46,10 +59,19 @@ class playSequence(QThread):
             for motor in self.__motors:
                 while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition() - 10 \
                         or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition() + 10:
-                    print("current position:" + str(self.__motors[motor].getCurrentPosition()))
-                    print("goal position:" + str(self.__motors[motor].getGoalPosition()))
-                    self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
-                    time.sleep(0.25)
+                    if not self.__mainWindow.shouldStop:
+                        # print("current position:" + str(self.__motors[motor].getCurrentPosition()))
+                        # print("goal position:" + str(self.__motors[motor].getGoalPosition()))
+                        self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+                        self.msleep(250)
+                    else:
+                        break
+
+
+    def stop(self):
+        self.__listOfSequencesHandler.robotInMotionMessage.accept()
+        self.__listOfSequencesHandler.enableUi()
+        self.__mainWindow.shouldStop = False
 
 
 def loadSequences(listOfSequenceHandler,motors):
@@ -78,7 +100,7 @@ class ListOfSequencesHandler:
     """
     Handler for the list of sequences
     """
-    def __init__(self, ui, motors):
+    def __init__(self, mainWindow, motors):
         """
         Initializtion of the handler for the list of sequences
         :param ui: The ui in which the list of sequence is in
@@ -87,16 +109,30 @@ class ListOfSequencesHandler:
         ## The dictionary of all the motors
         self.__motors = motors
         ## The list of sequence
-        self.__listOfSequences = ui.listOfSequences
+        self.__listOfSequences = mainWindow.ui.listOfSequences
         self.__listOfSequences.itemDoubleClicked.connect(self.playSequence)
         ## The create a new sequence button
-        self.__createSequenceButton = ui.createSequenceButton
+        self.__createSequenceButton = mainWindow.ui.createSequenceButton
         ## The ui in which the list of sequence is in
-        self.__ui = ui
+        self.__ui = mainWindow.ui
+        ## The main window of the ui
+        self.__mainWindow = mainWindow
         ## The window in which the new sequence will be created
         self.__window = None
         ## Thread to send the sequence to the motors
         self.playSequenceThread = None
+        ## Message to make the user put a name to the sequence
+        # TODO: Set the size of the message to something appropriate
+        self.robotInMotionMessage = QMessageBox()
+        self.robotInMotionMessage.setIcon(QMessageBox.Information)
+        self.robotInMotionMessage.setWindowIcon(QIcon(icon))
+        self.robotInMotionMessage.setText("Robot is in motion")
+        self.robotInMotionMessage.addButton(QMessageBox.Abort)
+        self.robotInMotionMessage.rejected.connect(self.__mainWindow.stopMotors)
+        self.robotInMotionMessage.rejected.connect(self.enableUi)
+        # self.robotInMotionMessage.setStandardButtons(QMessageBox.Ok)
+        # Renable the create sequence window and closes the message
+        # self.robotInMotionMessage.accepted.connect(self.enableUi())
 
         # Create a new window when the create sequence button is clicked
         self.__createSequenceButton.clicked.connect(self.createWindow)
@@ -182,8 +218,11 @@ class ListOfSequencesHandler:
         return self.__listOfSequences.selectedItems()
 
     def playSequence(self):
-        self.playSequenceThread = playSequence(self.getSelectedItems()[0].getMoves(), self.__motors)
+        self.playSequenceThread = playSequence(self.getSelectedItems()[0].getMoves(), self.__motors,self,self.__mainWindow)
+        self.__ui.setEnabled(False)
+        # self.robotInMotionMessage.rejected.connect(self.playSequenceThread.quit)
         self.playSequenceThread.start()
+        self.robotInMotionMessage.exec_()
 
 class CreateSequenceWindow(QDialog):
     """
@@ -243,7 +282,7 @@ class CreateSequenceWindow(QDialog):
             dictOfSlider[motor] = QSlider(Qt.Horizontal)
             dictOfSlider[motor].setMaximum(4095)
             dictOfSlider[motor].setValue(self.__motors[motor].getCurrentPosition())
-            dictOfSlider[motor].valueChanged.connect(self.__motors[motor].setGoalPosition)
+            dictOfSlider[motor].sliderMoved.connect(self.__motors[motor].setGoalPosition)
             print(self.__motors[motor].getName())
             self.listOfSliders.append(dictOfSlider[motor])
 
@@ -754,6 +793,8 @@ class MainWindow(QMainWindow):
         MainWindow initialization
         """
         super(MainWindow, self).__init__()
+        ## app
+        self.app = app
         ## ui object
         self.ui = QUiLoader().load("mainwindow.ui")
         self.ui.show()
@@ -785,7 +826,7 @@ class MainWindow(QMainWindow):
         self.updateSliderPositions()
 
         ## ListOfSequencesHandler object
-        self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
+        self.__listOfSenquenceHandler = ListOfSequencesHandler(self, self.dictMot)
 
         # load the last save
         loadSequences(self.__listOfSenquenceHandler,self.dictMot)
@@ -813,12 +854,14 @@ class MainWindow(QMainWindow):
         # Serial communication
         ## Outgoing message deque
         self.msgDeque = deque(maxlen=3)
+        ## Stop indicator for the motors
+        self.shouldStop = False
         ## Message reception QThread object
         self.msgReception = MessageReception(self)
         ## Message transmission QThread object
         self.msgTransmission = MessageTransmission(self)
-        app.aboutToQuit.connect(self.msgReception.stop)
-        app.aboutToQuit.connect(self.msgTransmission.stop)
+        self.app.aboutToQuit.connect(self.msgReception.stop)
+        self.app.aboutToQuit.connect(self.msgTransmission.stop)
         self.comm = None
         self.serialConnected = None
         try:
@@ -845,10 +888,11 @@ class MainWindow(QMainWindow):
         else:
             commPort = self.ui.portselection.currentText()
         self.comm, self.serialConnected = initSerialConnection(commPort)
-        app.aboutToQuit.connect(self.comm.close)
-        self.msgReception.start()
-        self.msgTransmission.start()
-        self.sendMessage('s')
+        if self.comm is not None:
+            self.app.aboutToQuit.connect(self.comm.close)
+            self.msgReception.start()
+            self.msgTransmission.start()
+            self.sendMessage('s')
 
     def setIcon(self):
         """
@@ -900,6 +944,7 @@ class MainWindow(QMainWindow):
                       self.dictMot["motor4"].getGoalPosition(),
                       self.dictMot["motor5"].getGoalPosition(),
                       self.dictMot["motor6"].getGoalPosition(),
+                      self.shouldStop,
                       b'\0')
             print("Outgoing: ", end='')
             print(values)
@@ -918,6 +963,11 @@ class MainWindow(QMainWindow):
         print("Calibrating vertical axis")
         self.sendMessage('c')
 
+    def stopMotors(self):
+        self.shouldStop = True
+        self.msgDeque.clear()
+        self.sendMessage('a')
+
 
 def makeStruct():
     """
@@ -934,8 +984,9 @@ def makeStruct():
     #       'c' -> calibrate vertical axis (rest of the message is ignored)
     # c: operation mode
     # 6H: position of all motors
+    # ?: stop indicator for all motors
     # c: end-of-message character
-    structDefinition = 'c6Hc'
+    structDefinition = 'c6H?c'
     s = struct.Struct(structDefinition)
     return s, struct.calcsize(structDefinition)
 

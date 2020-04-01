@@ -35,6 +35,8 @@ class MessageReception(QThread):
         for i in range(self.mainWindow.numberOfMotors):
             self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i+1])
         if self.firstMessage:
+            for i in range(self.mainWindow.numberOfMotors):
+                self.mainWindow.dictMot["motor" + str(i + 1)].setGoalPosition(msg[i + 1])
             self.mainWindow.updateSliderPositions()
             self.firstMessage = False
 

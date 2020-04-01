@@ -15,15 +15,12 @@ class Dynamixel {
     int id;
     //! Gear ratio for the motor's joint
     float gearRatio;
-    //! To center the 0
-    float centerZero;
 
   public:
-    Dynamixel(int idNumber, float ratio=1, float center = 0)
+    Dynamixel(int idNumber, float ratio=1)
     {
       id = idNumber;
       gearRatio = ratio; 
-      centerZero = center;
     }
 
     ~Dynamixel()
@@ -71,12 +68,8 @@ class Dynamixel {
         //Serial.println(model_number);
         pingSuccess = true;
       }
-      // why 2 multiturn
-      dxl_wb.setExtendedPositionControlMode(id);
-      //dxl_wb.writeRegister(uint8_t(221),0x11,0x2,0x4);
       dxl_wb.setNormalDirection(id);
-      setJointMode();
-      //dxl_wb.setMultiTurnControlMode(id);
+      setOperatingMode();
       if(initSuccess && pingSuccess)
       {
         //Serial.print("Motor id: ");
@@ -92,11 +85,17 @@ class Dynamixel {
     /** \brief Set the dynamixel in joint mode
       * \return success (bool)
       */
-    bool setJointMode()
+    bool setOperatingMode()
     {
       const char *log;
       bool result = false;
-      result = dxl_wb.jointMode(id, 150, 10, &log);
+      //result = dxl_wb.jointMode(id, 150, 10, &log);
+      result = dxl_wb.setExtendedPositionControlMode(id ,&log);
+      //Serial.println(log);
+      dxl_wb.writeRegister(id,"Profile_Acceleration",10,&log);
+      //Serial.println(log);
+      dxl_wb.writeRegister(id,"Profile_Velocity",150,&log);
+      dxl_wb.torqueOn(id);
       if (result == false)
       {
         //Serial.println(log);
@@ -116,7 +115,7 @@ class Dynamixel {
       */
     void moveMotor(int32_t pos)
     {
-      int32_t goalPos = (pos * gearRatio) - centerZero;
+      int32_t goalPos = pos * gearRatio;
       dxl_wb.goalPosition(id, (int32_t)goalPos);
       //Serial.println("Dynamixel is moving...");
     }
@@ -128,7 +127,13 @@ class Dynamixel {
     {
       int32_t data;
       dxl_wb.getPresentPositionData(id, &data);
-      uint16_t pos = (data+ centerZero)/gearRatio;
+      uint16_t pos = data/gearRatio;
       return pos; 
+    }
+
+    void torque(bool onoff)
+    {
+      
+      dxl_wb.torque(id, onoff);
     }
 };

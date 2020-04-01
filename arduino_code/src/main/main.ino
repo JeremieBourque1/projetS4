@@ -6,14 +6,14 @@
 //http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
 #include "encoder/Encoder.cpp"
 
-// Declare constants
-const int MESSAGE_SIZE = 15;
+// Declare global variables
+const int MESSAGE_SIZE = 16;
 char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
 Dynamixel mot1(id1, 0.879); //28
-Dynamixel mot2(id2, 0.879); //40
+Dynamixel mot2(id2, 0.879*2); //40
 Dynamixel mot3(id3, 1); //20
 
 
@@ -36,6 +36,8 @@ struct dataPack {
   uint16_t p5;
   //! Motor 6 position
   uint16_t p6;
+  //! Stop indicator
+  bool shouldStop;
   //! End of message character
   char last;
 };
@@ -46,16 +48,18 @@ void readMessage(char *message);
 void sendMessage(dataPack message);
 void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
+void stopMotors();
+void startMotors();
 
 // Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
-  while (!Serial);
+  //while (!Serial);
   mot1.init();
   mot2.init();
   mot3.init();
-  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
-  sendMessage(outgoingMessage);
+  //dataPack outgoingMessage{(byte)'s',(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
+  //sendMessage(outgoingMessage);
   //pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   //pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   //pinMode(test.getMotorPin(1),OUTPUT);
@@ -91,27 +95,34 @@ void loop() {
       //Serial.println(data.end);
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
-
-      if(data.mode == 'a')
+      if(data.shouldStop == false)
       {
-        moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+        if(data.mode == 'a')
+        {
+          moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+        }
+        else if(data.mode == 'i')
+        {
+          moveIncremental(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+        }
+        else if(data.mode == 's')
+        {
+          // Do nothing apart from sending message
+        }
+        else if(data.mode == 'c')
+        {
+          //TODO: connect to calibration function
+        }
       }
-      else if(data.mode == 'i')
+      else
       {
-        moveIncremental(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
-      }
-      else if(data.mode == 's')
-      {
-        // Do nothing apart from sending message
-      }
-      else if(data.mode == 'c')
-      {
-        //TODO: connect to calibration function
+        stopMotors();
+        startMotors();
       }
 
 
 
-      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
+      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (bool)data.shouldStop, (byte)'\0'};
       sendMessage(outgoingMessage);
     }
     else
@@ -190,4 +201,18 @@ void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
 {
   //TODO
+}
+
+void stopMotors()
+{
+  mot1.torque(false);
+  mot2.torque(false);
+  mot3.torque(false);
+}
+
+void startMotors()
+{
+  mot1.torque(true);
+  mot2.torque(true);
+  mot3.torque(true);
 }
