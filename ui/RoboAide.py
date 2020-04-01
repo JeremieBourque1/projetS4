@@ -833,9 +833,10 @@ class MainWindow(QMainWindow):
             print("SavePort file not found")
         self.ui.portselection.currentIndexChanged.connect(self.connect_port)
 
-    def connect_port(self,lastPort=None):
+    def connect_port(self, lastPort=None):
         """
         Connect the selected port of the controller
+        :param: lastPort: name of the port that was last used
         :return: None
         """
         if isinstance(lastPort, str):
@@ -856,7 +857,7 @@ class MainWindow(QMainWindow):
         appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
-    def updateSliderPositions(self,index = 0):
+    def updateSliderPositions(self, index = 0):
         """
         Initialize motor slider positions
         :return: None
@@ -870,7 +871,6 @@ class MainWindow(QMainWindow):
             self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
             self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
             print("Finished initializing slider positions")
-
 
     def populatePortsList(self):
         """
@@ -919,6 +919,11 @@ class MainWindow(QMainWindow):
 
 
 def makeStruct():
+    """
+    Make the struct and return it along with it's size in bytes
+    :return: struct object, byte size of the struct
+
+    """
     ## Define struct format for communicating messages
     # message size = 15 bytes
     # c: mode

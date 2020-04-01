@@ -3,8 +3,8 @@ import sys
 import time
 
 from ui import RoboAide
-from ui.Communication import initSerialConnection
 from PySide2.QtWidgets import QApplication
+from PySide2.QtWidgets import QComboBox
 
 # based on : https://bitbucket.org/jmcgeheeiv/pyqttestexample/src/default/src/
 
@@ -14,7 +14,7 @@ app = QApplication(sys.argv)
 
 class TestMove(unittest.TestCase):
     def setUp(self):
-        self.testComm, serialConnected = RoboAide.initSerialConnection('COM3')
+        #self.testComm, serialConnected = RoboAide.initSerialConnection('COM3')
         self.testWindow = RoboAide.MainWindow(app)
         self.testMove = RoboAide.Move(self.testWindow.dictMot)
 
@@ -54,6 +54,7 @@ class TestMotor(unittest.TestCase):
         self.testMotor.setName("Nom")
         self.assertEqual(self.testMotor.getName(),"Nom")
 
+
 class TestMainWindow(unittest.TestCase):
     def setUp(self):
         self.testWindow = RoboAide.MainWindow(app)
@@ -84,11 +85,20 @@ class TestMainWindow(unittest.TestCase):
         expectedResult = self.testWindow.s.pack(b'c', *valueList, b'\0')
         self.assertEqual(self.testWindow.msgDeque[-1], expectedResult)
 
+    def test_populatePortsList(self):
+        dummyPortsList = ["COM1", "COM2"]
+        self.testWindow.ports_list = dummyPortsList
+        self.testWindow.ui.portselection = QComboBox()
+        self.testWindow.populatePortsList()
+        AllItems = [self.testWindow.ui.portselection.itemText(i) for i in range(self.testWindow.ui.portselection.count())]
+        self.assertEqual(dummyPortsList, AllItems)
+
+
 class TestMessageReception(unittest.TestCase):
     def setUp(self):
         self.testWindow = RoboAide.MainWindow(app)
         self.testWindow.serialConnected = True
-        self.testWindow.comm = dummyComm()
+        self.testWindow.comm = DummyComm()
         self.testWindow.msgReception.start()
 
     def testRun(self):
@@ -109,11 +119,12 @@ class TestMessageReception(unittest.TestCase):
         while self.testWindow.msgReception.isRunning():  # Make sure the thread has exited before continuing tests
             pass
 
+
 class TestMessageTransmission(unittest.TestCase):
     def setUp(self):
         self.testWindow = RoboAide.MainWindow(app)
         self.testWindow.serialConnected = True
-        self.testWindow.comm = dummyComm()
+        self.testWindow.comm = DummyComm()
         self.testWindow.msgTransmission.start()
 
     def testRun(self):
@@ -130,7 +141,7 @@ class TestMessageTransmission(unittest.TestCase):
             pass
 
 
-class dummyComm:
+class DummyComm:
     def __init__(self, message=""):
         self.message = message
         self.lastSentMessage = None
