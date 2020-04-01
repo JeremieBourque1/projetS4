@@ -672,7 +672,7 @@ class Motor:
         self.__window = mainWindow
         self.mu = QMutex()
 
-    def setGoalPosition(self, pos):
+    def setGoalPosition(self, pos, sendMessage=True):
         """
         Setter of the goal positon
         :param pos: the position
@@ -682,7 +682,8 @@ class Motor:
         self.__goalPosition=pos
         self.mu.unlock()
         print("%s: %d" % (self.__name, pos))
-        self.__window.sendMessage('a')
+        if sendMessage:
+            self.__window.sendMessage('a')
 
     def getGoalPosition(self):
         """
@@ -790,17 +791,17 @@ class MainWindow(QMainWindow):
         loadSequences(self.__listOfSenquenceHandler,self.dictMot)
 
         # Connect the slider signals
-        self.ui.slider_mot1.valueChanged.connect(
+        self.ui.slider_mot1.sliderMoved.connect(
             lambda: self.dictMot["motor1"].setGoalPosition(self.ui.slider_mot1.value()))
-        self.ui.slider_mot2.valueChanged.connect(
+        self.ui.slider_mot2.sliderMoved.connect(
             lambda: self.dictMot["motor2"].setGoalPosition(self.ui.slider_mot2.value()))
-        self.ui.slider_mot3.valueChanged.connect(
+        self.ui.slider_mot3.sliderMoved.connect(
             lambda: self.dictMot["motor3"].setGoalPosition(self.ui.slider_mot3.value()))
-        self.ui.slider_mot4.valueChanged.connect(
+        self.ui.slider_mot4.sliderMoved.connect(
             lambda: self.dictMot["motor4"].setGoalPosition(self.ui.slider_mot4.value()))
-        self.ui.slider_mot5.valueChanged.connect(
+        self.ui.slider_mot5.sliderMoved.connect(
             lambda: self.dictMot["motor5"].setGoalPosition(self.ui.slider_mot5.value()))
-        self.ui.slider_mot6.valueChanged.connect(
+        self.ui.slider_mot6.sliderMoved.connect(
             lambda: self.dictMot["motor6"].setGoalPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
