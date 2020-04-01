@@ -12,6 +12,7 @@ from PySide2.QtGui import QIcon, QBrush
 from PySide2.QtCore import QRect, Qt, QMutex, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
 from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from ui.Drawer import Drawer
 from collections import deque
 import sys
 import warnings
@@ -711,7 +712,7 @@ class Motor:
         self.__window = mainWindow
         self.mu = QMutex()
 
-    def setGoalPosition(self, pos, sendMessage=True):
+    def setGoalPosition(self, pos):
         """
         Setter of the goal positon
         :param pos: the position
@@ -721,8 +722,7 @@ class Motor:
         self.__goalPosition=pos
         self.mu.unlock()
         print("%s: %d" % (self.__name, pos))
-        if sendMessage:
-            self.__window.sendMessage('a')
+        self.__window.sendMessage('a')
 
     def getGoalPosition(self):
         """
@@ -823,6 +823,11 @@ class MainWindow(QMainWindow):
             self.dictMot[mot.getName()] = mot
         # ---------------
 
+        ## List of drawers
+        self.drawersList = []
+        for i in range(3):
+            self.drawersList.append(Drawer(self, "drawer" + str(i+1)))
+
         self.updateSliderPositions()
 
         ## ListOfSequencesHandler object
@@ -847,6 +852,14 @@ class MainWindow(QMainWindow):
 
         # Connect button signals
         self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
+
+        # Connect drawer buttons signals
+        self.ui.drawer1Open.clicked.connect(self.drawersList[0].open)
+        self.ui.drawer2Open.clicked.connect(self.drawersList[1].open)
+        self.ui.drawer3Open.clicked.connect(self.drawersList[2].open)
+        self.ui.drawer1Close.clicked.connect(self.drawersList[0].close)
+        self.ui.drawer2Close.clicked.connect(self.drawersList[1].close)
+        self.ui.drawer3Close.clicked.connect(self.drawersList[2].close)
 
         # Connect the tab changed with updating the sliders
         self.ui.tabWidget.currentChanged.connect(self.updateSliderPositions)
@@ -904,11 +917,11 @@ class MainWindow(QMainWindow):
 
     def updateSliderPositions(self, index = 0):
         """
-        Initialize motor slider positions
+        Update motor slider positions
         :return: None
         """
         if index == 0:
-            print("Initializing motor slider positions")
+            print("Updating motor slider positions")
             self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
             self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
             self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
@@ -945,6 +958,9 @@ class MainWindow(QMainWindow):
                       self.dictMot["motor5"].getGoalPosition(),
                       self.dictMot["motor6"].getGoalPosition(),
                       self.shouldStop,
+                      self.drawersList[0].getState(),
+                      self.drawersList[1].getState(),
+                      self.drawersList[2].getState(),
                       b'\0')
             print("Outgoing: ", end='')
             print(values)
@@ -976,7 +992,6 @@ def makeStruct():
 
     """
     ## Define struct format for communicating messages
-    # message size = 15 bytes
     # c: mode
     #       'a' -> absolute (send an absolute position between 0 and 100)
     #       'i' -> incremental (move from the current position from a certain increment)
@@ -985,8 +1000,9 @@ def makeStruct():
     # c: operation mode
     # 6H: position of all motors
     # ?: stop indicator for all motors
+    # 3?: open/close drawers (True = open, False = close)
     # c: end-of-message character
-    structDefinition = 'c6H?c'
+    structDefinition = 'c6H?3?c'
     s = struct.Struct(structDefinition)
     return s, struct.calcsize(structDefinition)
 

@@ -7,7 +7,7 @@
 #include "encoder/Encoder.cpp"
 
 // Declare global variables
-const int MESSAGE_SIZE = 16;
+const int MESSAGE_SIZE = 19;
 char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
@@ -38,6 +38,12 @@ struct dataPack {
   uint16_t p6;
   //! Stop indicator
   bool shouldStop;
+  //! Drawer 1 state
+  bool drawer1;
+  //! Drawer 2 state
+  bool drawer2;
+  //! Drawer 3 state
+  bool drawer3;
   //! End of message character
   char last;
 };
@@ -48,6 +54,7 @@ void readMessage(char *message);
 void sendMessage(dataPack message);
 void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
+void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3);
 void stopMotors();
 void startMotors();
 
@@ -100,10 +107,12 @@ void loop() {
         if(data.mode == 'a')
         {
           moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+          setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
         }
         else if(data.mode == 'i')
         {
           moveIncremental(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+          setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
         }
         else if(data.mode == 's')
         {
@@ -199,6 +208,11 @@ void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p
     \param p1, ..., p6 : position for each motor
 */
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
+{
+  //TODO
+}
+
+void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3)
 {
   //TODO
 }

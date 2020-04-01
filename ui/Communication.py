@@ -25,6 +25,7 @@ class MessageReception(QThread):
                 print(unpacked_msg)
                 self.counter += 1
                 self.setMotorCurrentPosition(unpacked_msg)
+                self.setDrawerState(unpacked_msg)
         print("done")
 
     def stop(self):
@@ -39,6 +40,14 @@ class MessageReception(QThread):
                 self.mainWindow.dictMot["motor" + str(i + 1)].setGoalPosition(msg[i + 1])
             self.mainWindow.updateSliderPositions()
             self.firstMessage = False
+
+    def setDrawerState(self, msg):
+        """
+        Update drawer state (open/closed)
+        :return: None
+        """
+        for drawer in self.mainWindow.drawersList:
+            drawer.setState(msg[i+9])
 
 
 class MessageTransmission(QThread):
@@ -58,7 +67,6 @@ class MessageTransmission(QThread):
             self.msleep(500)
             if len(self.mainWindow.msgDeque) > 0:
                 self.mainWindow.msgMu.lock()
-                print("deque length: %d" % len(self.mainWindow.msgDeque))
                 self.mainWindow.comm.write(self.mainWindow.msgDeque.popleft())
                 self.mainWindow.msgMu.unlock()
 
