@@ -20,13 +20,13 @@ const int id2 = 223;
 */
 struct dataPack {
   //! Motor 1 position
-  uint16_t p1;
+  uint16_t p1; //moteur bras
   //! Motor 2 position
   uint16_t p2;
   //! Motor 3 position
-  uint16_t p3;
+  uint16_t p3; //moteur bras
   //! Motor 4 position
-  uint16_t p4;
+  uint16_t p4; // Vertical motor
   //! Motor 5 position
   uint16_t p5;
   //! Motor 6 position
@@ -42,7 +42,7 @@ void sendMessage(dataPack message);
 void trigShouldSlowDownPin1();
 void trigShouldSlowDownPin2();
 
-//axialMotor axialMotor(13,-1,A1,A2,51,53,2,3);
+//axialMotor axialMotor(53,-1,A1,A2,19,20,2,3);
 axialMotor test; //classe test
 //Encoder myEnc(2, 3); //classe de lecture de l'encodeur
 
@@ -58,72 +58,29 @@ void setup() {
 
   pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, LOW);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, LOW);
   pinMode(test.getMotorPin(1),OUTPUT);
   pinMode(test.getMotorPin(2),OUTPUT);
   pinMode(test.getDrivePin(),OUTPUT);
 
-  pinMode(38,OUTPUT); //power for the drive
-  digitalWrite(38,HIGH); //power for the drive. A VOIR*****
+  pinMode(38,OUTPUT); //power for one of the sensor
+  digitalWrite(38,HIGH); //power for one of the sensor
+  test.setEnableDrive(true);
+  test.modifyCalibrationCase(0);
+  test.setMotorState(-1);
 }
-int oldPosition=-999;
-int calibrationCase = 0;
+
+int requiredPosition = 2000;
 bool slowItTOP = false;
 bool slowItBOT = false;
-  int compteur = 0;
   
 void loop() {
   
-
+  long encPosition = test.enc->read();
   
-long encPosition = test.enc->read();
+  test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition);
 
-  if (encPosition != oldPosition) 
-  {
-    Serial.println(encPosition);
-    oldPosition = encPosition;
-  }
-
-  test.setEnableDrive(true);
-  test.setMotorState(1);
- 
-  if (calibrationCase == 0)
-  {
-      Serial.println("Calibration case = 0");
-    calibrationCase = test.runAxialCalibration(calibrationCase,encPosition);
-    Serial.println("ÉTAPE 1");
-    Serial.println(calibrationCase);
-  }
-
-  if (calibrationCase == 1 && slowItTOP == true)
-  {
-    Serial.println("Calibration case = 1");
-    calibrationCase = test.runAxialCalibration(calibrationCase,encPosition);
-    Serial.println(calibrationCase);
-  }
-
-  if (test.getProximitySensorValue(1) == 0)
-  {
-   // Serial.println(test.getProximitySensorValue(test.getProximitySensorPin(1)));
-    //Serial.println("le sensor du TOP est actif!");
-    slowItTOP = false;
-  }
-  
-  if (test.getProximitySensorValue(2) == 0)
-  {
-    //Serial.println(test.getProximitySensorValue(2);
-    //Serial.println("le sensor du bas est actif!");
-    slowItBOT = false;
-  }
- /* if (test.shouldSlowDown(test.getProximitySensorPin(1)) == true || test.shouldSlowDown(test.getProximitySensorPin(2)) == true)
-  {
-    //Serial.println("J'arrete le moteur car je m'y en approche dangereusement");
-    test.setMotorState(-1);
-  }*/
- 
-   //Serial.println(test.getProximitySensorValue(1));
-  // Serial.println(test.getProximitySensorValue(2));
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
@@ -211,13 +168,19 @@ void sendMessage(dataPack message)
 
 void trigShouldSlowDownPin1()
 {
-    Serial.println("ICITTE1");
     slowItTOP = true;
+    if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
+    {
+      test.setMotorState(-1);
+    }
 }
 
 void trigShouldSlowDownPin2()
 {
-    Serial.println("ICITTE2");
-    slowItBOT = true;
-
+  slowItBOT = true;
+    
+  if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
+  {
+    test.setMotorState(-1);
+  }
 }
