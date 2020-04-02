@@ -94,10 +94,10 @@ int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
     if (newCase == 0)
     {
       setMotorState(1);
-      Serial.println(getMotorState());
+     Serial.println(getMotorState());
       return 1;
     }
-    
+      
     else if (newCase == 1)
     {  
       setMotorState(-1);
@@ -133,13 +133,7 @@ void axialMotor::setMotorState(int stateValue)
      {
        //Serial.println("ICI SI LE STATE VALUE EST DE 1");
        
-       analogWrite(getMotorPin(2),0);
-       
-       for(int motorValue = 0 ; motorValue <= 255; motorValue +=5)  //CECI EST A ADAPTER POUR ANALOG
-        {
-          analogWrite(getMotorPin(1), motorValue); 
-          delay(30);    
-        } 
+       analogWrite(getMotorPin(2),255);
      }
      
   else if (motorState == 0)

@@ -65,14 +65,17 @@ void setup() {
   pinMode(test.getDrivePin(),OUTPUT);
 
   pinMode(38,OUTPUT); //power for the drive
-  digitalWrite(38,HIGH); //power for the drive
+  digitalWrite(38,HIGH); //power for the drive. A VOIR*****
 }
 int oldPosition=-999;
-int calibrationCase = -1;
+int calibrationCase = 0;
 bool slowItTOP = false;
 bool slowItBOT = false;
-
+  int compteur = 0;
+  
 void loop() {
+  
+
   
 long encPosition = test.enc->read();
 
@@ -84,7 +87,7 @@ long encPosition = test.enc->read();
 
   test.setEnableDrive(true);
   test.setMotorState(1);
-
+ 
   if (calibrationCase == 0)
   {
       Serial.println("Calibration case = 0");
@@ -92,6 +95,7 @@ long encPosition = test.enc->read();
     Serial.println("ÉTAPE 1");
     Serial.println(calibrationCase);
   }
+
   if (calibrationCase == 1 && slowItTOP == true)
   {
     Serial.println("Calibration case = 1");
@@ -209,7 +213,6 @@ void trigShouldSlowDownPin1()
 {
     Serial.println("ICITTE1");
     slowItTOP = true;
-
 }
 
 void trigShouldSlowDownPin2()
