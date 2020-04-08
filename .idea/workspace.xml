@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="e43b9ffa-ffa7-4234-8853-c0a4733ba9f0" name="Default Changelist" comment="Update of CAD, ASSEMBLY_INSTRUCTIONS and BOM">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/projetS4.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Cytron 430RPM.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/KP08 bearing bracket.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Leadscrew.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/NJK-5002 Base Bracket.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Proto_ASSY.SLDASM" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Proto_seg1_ASSY.SLDASM" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Proto_seg2_ASSY.SLDASM" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/Proto_seg3_ASSY.SLDASM" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/adaptateur.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/base_proto.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/jaw shaft coupler 5x8mm.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/proto_base_verticale.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/proto_bracket_vertical.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/proto_motor_bracket.SLDPRT" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CAD_prototype/spur gear_ai_proto.sldprt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PROTOTYPE_ASSEMBLY_INSTRUCTIONS.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BOM_proto.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/BOM_proto.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/535130 assembly.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/535130 assembly.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/585416.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/585416.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/585424.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/585424.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/585446.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/585446.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/585454.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/585454.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/585468.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/585468.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Base plate.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Linear Rail Shaft Guide-Support - 8mm Diameter - SK8.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/Linear Rail Shaft Guide-Support - 8mm Diameter - SK8.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Parametric_pinion_V1.1.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Plaque_support_engrenage.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Proto_ASSY.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Proto_seg1_ASSY.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Proto_seg2_ASSY.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Proto_seg3_ASSY.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Robot Assy.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Roto_vertical_sys_ASSY.SLDASM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/SC8UU 8x34mm Slide Bushing.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/SC8UU 8x34mm Slide Bushing.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/Trapezoidal lead screw Nut tr8x8-4.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/Trapezoidal lead screw Nut tr8x8-4.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/XM,H-430_idler.SLDASM" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/XM,H-430_idler.SLDASM" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/base_proto.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/bracket.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/proto_base_verticale.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/proto_bracket_bearing.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/proto_bracket_bearing.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/proto_bracket_vertical.SLDPRT" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/shaft_4po.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/shaft_4po.SLDPRT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CAD/support_engrenage_proto.SLDPRT" beforeDir="false" afterPath="$PROJECT_DIR$/CAD_prototype/support_engrenage_proto.SLDPRT" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="IgnoredFileRootStore">
+    <option name="generatedRoots">
+      <set>
+        <option value="C:\Users\olivi\Documents\UdeS\Session_4\Projet\projetS4\.idea" />
+      </set>
+    </option>
+  </component>
+  <component name="ProjectId" id="1YItz4XiUChHYWtlx0TZvq7Yln3" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Recent" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+  </component>
+  <component name="RunManager" selected="Python.RoboAide">
+    <configuration name="RoboAide" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="projetS4" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ui" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ui/RoboAide.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests in test_ui.py" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="projetS4" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/test_ui.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python tests.Unittests in test_ui.py" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="viewStates">
+      <list>
+        <serviceView>
+          <treeState>
+            <expand />
+            <select />
+          </treeState>
+        </serviceView>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e43b9ffa-ffa7-4234-8853-c0a4733ba9f0" name="Default Changelist" comment="" />
+      <created>1582642194208</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1582642194208</updated>
+      <workItem from="1582642197626" duration="335000" />
+      <workItem from="1582642548902" duration="2984000" />
+      <workItem from="1583610908715" duration="10247000" />
+      <workItem from="1583848314110" duration="1806000" />
+      <workItem from="1583943909140" duration="9680000" />
+      <workItem from="1585158485437" duration="3643000" />
+      <workItem from="1585668070846" duration="676000" />
+      <workItem from="1586371004783" duration="1304000" />
+      <workItem from="1586384685936" duration="54000" />
+      <workItem from="1586384982595" duration="1003000" />
+    </task>
+    <task id="LOCAL-00001" summary="Prototype Assembly CAD">
+      <created>1582688455433</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1582688455433</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Prototype BOM">
+      <created>1582688936173</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1582688936173</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Port selection implementation">
+      <created>1583953457109</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1583953457109</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Open and close drawers buttons UI">
+      <created>1585668679659</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1585668679659</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Prototype Assembly CAD" />
+    <MESSAGE value="Prototype BOM" />
+    <MESSAGE value="Port selection implementation" />
+    <MESSAGE value="Open and close drawers buttons UI" />
+    <option name="LAST_COMMIT_MESSAGE" value="Open and close drawers buttons UI" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="469" y="128" width="738" height="743" key="#RoboAide" timestamp="1583614107158">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="469" y="128" width="738" height="743" key="#RoboAide/0.0.1500.1000@0.0.1500.1000" timestamp="1583614107158" />
+    <state x="206" y="156" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1583614069244">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="206" y="156" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1500.1000@0.0.1500.1000" timestamp="1583614069244" />
+    <state x="372" y="96" width="945" height="807" key="CommitChangelistDialog2" timestamp="1586385512785">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="372" y="96" width="945" height="807" key="CommitChangelistDialog2/0.0.1500.1000@0.0.1500.1000" timestamp="1586385512785" />
+    <state width="938" height="466" key="DebuggerActiveHint" timestamp="1583947313075">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="938" height="466" key="DebuggerActiveHint/0.0.1500.1000@0.0.1500.1000" timestamp="1583947313075" />
+    <state x="93" y="93" width="1313" height="813" key="DiffContextDialog" timestamp="1583953223799">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="93" y="93" width="1313" height="813" key="DiffContextDialog/0.0.1500.1000@0.0.1500.1000" timestamp="1583953223799" />
+    <state x="389" y="187" width="821" height="486" key="FileChooserDialogImpl" timestamp="1583848430125">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="389" y="187" width="821" height="486" key="FileChooserDialogImpl/0.0.1500.1000@0.0.1500.1000" timestamp="1583848430125" />
+    <state width="1458" height="269" key="GridCell.Tab.0.bottom" timestamp="1585673936391">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="269" key="GridCell.Tab.0.bottom/0.0.1500.1000@0.0.1500.1000" timestamp="1585673936391" />
+    <state width="1458" height="269" key="GridCell.Tab.0.center" timestamp="1585673936390">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="269" key="GridCell.Tab.0.center/0.0.1500.1000@0.0.1500.1000" timestamp="1585673936390" />
+    <state width="1458" height="269" key="GridCell.Tab.0.left" timestamp="1585673936390">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="269" key="GridCell.Tab.0.left/0.0.1500.1000@0.0.1500.1000" timestamp="1585673936390" />
+    <state width="1458" height="269" key="GridCell.Tab.0.right" timestamp="1585673936391">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="269" key="GridCell.Tab.0.right/0.0.1500.1000@0.0.1500.1000" timestamp="1585673936391" />
+    <state width="1458" height="140" key="GridCell.Tab.1.bottom" timestamp="1585167915920">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="140" key="GridCell.Tab.1.bottom/0.0.1500.1000@0.0.1500.1000" timestamp="1585167915920" />
+    <state width="1458" height="140" key="GridCell.Tab.1.center" timestamp="1585167915919">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="140" key="GridCell.Tab.1.center/0.0.1500.1000@0.0.1500.1000" timestamp="1585167915919" />
+    <state width="1458" height="140" key="GridCell.Tab.1.left" timestamp="1585167915919">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="140" key="GridCell.Tab.1.left/0.0.1500.1000@0.0.1500.1000" timestamp="1585167915919" />
+    <state width="1458" height="140" key="GridCell.Tab.1.right" timestamp="1585167915919">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state width="1458" height="140" key="GridCell.Tab.1.right/0.0.1500.1000@0.0.1500.1000" timestamp="1585167915919" />
+    <state x="252" y="144" key="SettingsEditor" timestamp="1582642531815">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="252" y="144" key="SettingsEditor/0.0.1500.1000@0.0.1500.1000" timestamp="1582642531815" />
+    <state x="343" y="234" key="Vcs.Push.Dialog.v2" timestamp="1585668686973">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="343" y="234" key="Vcs.Push.Dialog.v2/0.0.1500.1000@0.0.1500.1000" timestamp="1585668686973" />
+    <state x="558" y="418" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1586385111044">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="558" y="418" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1500.1000@0.0.1500.1000" timestamp="1586385111044" />
+    <state x="420" y="223" width="672" height="678" key="search.everywhere.popup" timestamp="1583952936106">
+      <screen x="0" y="0" width="1500" height="1000" />
+    </state>
+    <state x="420" y="223" width="672" height="678" key="search.everywhere.popup/0.0.1500.1000@0.0.1500.1000" timestamp="1583952936106" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/projetS4$RoboAide.coverage" NAME="RoboAide Coverage Results" MODIFIED="1585668173615" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ui" />
+    <SUITE FILE_PATH="coverage/projetS4$Unittests_in_test_ui_py.coverage" NAME="Unittests in test_ui.py Coverage Results" MODIFIED="1585162789359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+  </component>
+</project>
