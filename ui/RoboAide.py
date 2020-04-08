@@ -5,19 +5,24 @@
 #
 # Date created: 22-01-2020
 
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__))) # import error fix
+
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
 from PySide2.QtCore import QRect, Qt, QMutex, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
-from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
-from ui.Drawer import Drawer
+from Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from Drawer import Drawer
 from collections import deque
-import sys
+
 import warnings
 import struct
-import os
+
 import json
 import time
 
