@@ -67,7 +67,7 @@ void setup() {
   pinMode(38,OUTPUT); //power for one of the sensor
   digitalWrite(38,HIGH); //power for one of the sensor
   test.setEnableDrive(true);
-  test.modifyCalibrationCase(0);
+  test.modifyCalibrationCase(-1);
   test.setMotorState(-1);
 }
 
