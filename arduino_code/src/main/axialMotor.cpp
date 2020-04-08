@@ -1,11 +1,19 @@
 #include <Arduino.h>
 #include "axialMotor.h"
+// We used those links to modify encoder.cpp
+//https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
+//http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
 #include "encoder/Encoder.cpp"
 
 /** \brief Construct the axial motor with initial states/pinout
+  * \param enAPinValue : Int value corresponding to the value of the activation pin of the DC drive.
   * \param motorInitialState : Motor start state (0,1,-1). 0 means going CCW, 1 CW and -1 STOP.
-  * \param ProxSensor1Value : Pin value of the first proximity sensor
-  * \param ProxSensor2Value : Pin value of the second proximity sensor
+  * \param pinCWOutputValue : Int value of the clockwise pin of the drive.
+  * \param pinCCWOutputValue : Int value of the counter clockwise pin of the drive.
+  * \param ProxSensor1Value : Int value of the pin of the first proximity sensor.
+  * \param ProxSensor2Value : Int value of the pin of the second proximity sensor.
+  * \param pinEncoderL : Int value of the pin of the Left encoder.
+  * \param pinEncoderR : Int value of the pin of the Right encoder.
   */
 axialMotor::axialMotor(int enAPinValue, int motorInitialState,int pinCWOutputValue, int pinCCWOutputValue, int proxSensor1Value,int proxSensor2Value,int pinEncoderL,int pinEncoderR)
 {
@@ -19,12 +27,12 @@ axialMotor::axialMotor(int enAPinValue, int motorInitialState,int pinCWOutputVal
   homePosition = 0;
   oldPosition = -999;
   calibrationCase = -1;
-  totalClicksOnRobot = 1000; //This value needs to be chanded by the one measured at client
+  totalClicksOnRobot = 50000; //This value needs to be chanded by the one measured at client
   totalIncrementOfSlider = 4095;
 
 }
 
-/** \brief Construct the axial motor with no initial states/pinout. Motor state is then set to STOP (-1), and proximity sensor pinout to 51 and 53 by default.
+/** \brief Construct the axial motor with no initial states/pinout. See constructor with arguments for explanations of variables.
   */
 axialMotor::axialMotor()
 {
@@ -38,7 +46,7 @@ axialMotor::axialMotor()
   homePosition = 0;
   oldPosition = -999;
   calibrationCase = -1;
-  totalClicksOnRobot = 1000; //This value needs to be chanded by the one measured at client
+  totalClicksOnRobot = 50000; //This value needs to be chanded by the one measured at client
   totalIncrementOfSlider = 4095;
 }
 
@@ -48,7 +56,9 @@ axialMotor::~axialMotor()
 }
 
 /** \brief Checks if the requirement to make the motor stop are met. 
- *  /return bool : value confirming if the motor should slow down or not.
+ *  \param slowItTOP : Value of the boolean triggered by the interrupt of the top proximity sensor.
+ *  \param slowItBOT : Value of the boolean triggered by the interrupt of the bottom proximity sensor.
+ *  /return bool : value confirming (true) if the motor should slow down or not (false).
  */
 bool axialMotor::shouldSlowDown(bool slowItTOP,bool slowItBOT)
 {
@@ -56,18 +66,15 @@ bool axialMotor::shouldSlowDown(bool slowItTOP,bool slowItBOT)
   {
     if ( motorState == 1 )
     {
-      //Serial.println("Sortie 1");
       return true;
     }
     else if (motorState == 0  || motorState == -1)
     {
-      //Serial.println("Sortie 2");
       return false;
     }
     
     else
     {
-      //Serial.println("Sortie 3");
       return false;
     }
   }
@@ -76,29 +83,25 @@ bool axialMotor::shouldSlowDown(bool slowItTOP,bool slowItBOT)
   {
     if (motorState == 1  || motorState == -1)
     {
-     // Serial.println("Sortie 4");
       return false;
     }
   
     else if (motorState == 0)
     {
-      //Serial.println("Sortie 5");
       return true;
     }
     
     else
     {
-     // Serial.println("Sortie 6");
       return false;
     }
   }
 }
 
-/** \brief Calibrate the assembly's vertical axis using the upper proximity sensor.
-  * \param motorInitialState : Motor start state (0,1,-1). 0 means going CCW, 1 CW and -1 STOP.
-  * \param ProxSensor1Value : Pin value of the first proximity sensor.
-  * \param ProxSensor2Value : Pin value of the second proximity sensor.
-  * \return bool : Boolean value verifying the end of the calibration sequence.
+/** \brief Calibrate the assembly's vertical axis using the top proximity sensor.
+  * \param newCase : Int value of the case for the calibration. Case 0 is the first enter in the function (first step). Case 1 is the second step and -1 is the initialize.
+  * \param newHomePosition : Int value of the encoder given to update the homePosition variable.
+  * \return int : Returns the value of the next case to be executed. Example, if case 0 is run, the return will be 1. If the case 1 is run ,the return will be -1;
   */
 int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
 {
@@ -112,6 +115,7 @@ int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
     {  
       setMotorState(-1);
       homePosition = newHomePosition;
+      Serial.println(homePosition);
       return -1; 
     }
     
@@ -121,8 +125,8 @@ int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
     }
 }
 
-/** \brief Sets the motor state value to a given value of 0,1 or -1. If the value is not in this range, the function forces -1. It then changes the pin output to the motor accordingly
- *  \param StateValue : value confirming if the motor should slow down or not.
+/** \brief Sets the motorState variable value to a given value of 0,1 or -1. If the value is not in this range, the function forces -1. It then changes the pin output to the motor accordingly. 1,0 and -1 are respectively CW,CCW and stop.
+ *  \param StateValue : value sent to make the motor move.
  */
 void axialMotor::setMotorState(int stateValue)
 {
@@ -131,7 +135,7 @@ void axialMotor::setMotorState(int stateValue)
 
   if (stateValue != -1 && stateValue != 1 && stateValue != 0)
      {
-        //Serial.println("MAUVAISE ENTRÉE, MAINTENANT MOTORSTATE SERA DE :");
+        //Serial.println("Setting motor to: -1");
         stateValue = -1; //doesn't move the motor
      }
      
@@ -140,29 +144,29 @@ void axialMotor::setMotorState(int stateValue)
    
   if (motorState == 1) //Changes the motor rotation by changing output pin value.
      {
-       //Serial.println("ICI SI LE STATE VALUE EST DE 1");
-       analogWrite(getMotorPin(2),255);
-       analogWrite(getMotorPin(1),0);
+       //Serial.println("Setting motor to: 1");
+       analogWrite(pinCCWOutput,255);
+       analogWrite(pinCWOutput,0);
      }
      
   else if (motorState == 0)
      {
-      // Serial.println("ICI SI LE STATE VALUE EST DE 0");
-       analogWrite(getMotorPin(2),0);
-       analogWrite(getMotorPin(1),255);
+       //Serial.println("Setting motor to: 0");
+       analogWrite(pinCCWOutput,0);
+       analogWrite(pinCWOutput,255);
 
      }
      
   else if (motorState == -1)
      {
-      // Serial.print("ICI SI LE STATE VALUE EST DE -1");
-       analogWrite(getMotorPin(2),1); //si erreur, mettre les deux à zéro
-       analogWrite(getMotorPin(1),1);
+       //Serial.println("Setting motor to: -1 (2)");
+       analogWrite(pinCCWOutput,1); //si erreur, mettre les deux à zéro
+       analogWrite(pinCWOutput,1);
      }
 }
 
 /** \brief gets the motor current state. 
- *  \return int : current state value of the motor.
+ *  \return int : Current state value of the motor.
  */
 int axialMotor::getMotorState()
 {
@@ -170,8 +174,8 @@ int axialMotor::getMotorState()
 }
 
 /** \brief Gives the proximity sensor pin number on the arduino. 
- *  \param sensorNumber : Boolean value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
- *  \return int : Returns the pin number.
+ *  \param sensorNumber : int value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
+ *  \return int : Returns the pin number of the chose sensor.
  */
 int axialMotor::getProximitySensorPin(int sensorNumber)
 {
@@ -187,8 +191,8 @@ int axialMotor::getProximitySensorPin(int sensorNumber)
 }
 
 /** \brief Gives a sensor value. All proximity sensors are pulled up.  
- *  \param sensorNumber : Boolean value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
- *  \return int : actual value given off by the sensor.
+ *  \param sensorNumber : Int value corresponding to the sensor number in the assembly. 1 is the top sensor, 2, the bottom sensor.
+ *  \return int : actual value given off by the chosen sensor.
  */
 int axialMotor::getProximitySensorValue(int sensorNumber)
 {
@@ -203,9 +207,9 @@ int axialMotor::getProximitySensorValue(int sensorNumber)
   }
 }
 
-/** \brief Gives the chosen motor direction pin.  
- *  \param directionNumber : int value corresponding to the direction of the motor in the assembly. 1 is the clockwise direction, 2, the counterclockwise direction.
- *  \return int : actual value of the pin.
+/** \brief Gives the chosen motor direction pin.
+ *  \param directionNumber : Int value corresponding to the direction of the motor in the assembly. 1 is the clockwise direction, 2, the counterclockwise direction.
+ *  \return int : actual value of the chosen pin. If values given to the function are not right, the function will return -1.
  */
 int axialMotor::getMotorPin(int directionNumber)
 {
@@ -225,7 +229,7 @@ int axialMotor::getMotorPin(int directionNumber)
 }
 
 /** \brief Enables of disables the drive pin on the L298N DC drive  
- *  \param driveValue : bool value corresponding to the "ON" or "OFF" behaviour of the drive
+ *  \param driveValue : Bool value corresponding to the "ON" (true) or "OFF" (false) behaviour of the drive
  */
 void axialMotor::setEnableDrive(bool driveValue)
 {
@@ -243,7 +247,15 @@ void axialMotor::setEnableDrive(bool driveValue)
   }
 }
 
-void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int requiredPosition)
+/** \brief This function makes the whole vertical axis function. It checks for calibration cases, checks if 
+ *  interrupts have been trigged and moves the arm to the desired position. This means that the function utilises runAxialCalibration(),
+ *  getProximitySensorValue(),modifyCalibrationCase() and goToPosition().
+ *  \param encPosition : Long value used to give the wanted position.
+ *  \param slowItTOP : Boolean pointer to the stop value of the top interrupt sequence.
+ *  \param slowItBOT : Boolean pointer to the stop value of the bottom interrupt sequence.
+ *  \param requiredPosition : Int value representing the wanted position.
+ */
+void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int requiredPosition, bool buttonCalibration)
 {
 
   if (encPosition != oldPosition) 
@@ -251,26 +263,29 @@ void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int re
     //Serial.println(encPosition);
     oldPosition = encPosition;
   }
-
+  if (buttonCalibration == true)
+  {
+    calibrationCase = 0;
+  }
   if (calibrationCase == 0)
   {
     Serial.println("Calibration case = 0");
-    modifyCalibrationCase(runAxialCalibration(calibrationCase,encPosition));
+    calibrationCase = runAxialCalibration(calibrationCase,encPosition);
     Serial.println(calibrationCase);
   }
   if (calibrationCase == 1 && *slowItTOP == true)
   {
     Serial.println("Calibration case = 1");
-    modifyCalibrationCase(runAxialCalibration(calibrationCase,encPosition));
+    calibrationCase = runAxialCalibration(calibrationCase,encPosition);
   }
 
-  if (getProximitySensorValue(1) == 1)
+  if (digitalRead(proximitySensor1Pin) == 1)
   {
     //Serial.println("slowItTOP = FALSE");
     *slowItTOP = false;
   }
   
-  if (getProximitySensorValue(2) == 1)
+  if (digitalRead(proximitySensor2Pin) == 1)
   {
     //Serial.println("slowItBOT = FALSE");
     *slowItBOT = false;
@@ -278,13 +293,12 @@ void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int re
   
   if (calibrationCase == -1)
   {
-    Serial.println("hi");
     goToPosition(encPosition,requiredPosition);
   }
 
 }
 
-/** \brief Gives the status of the drive pin on the L298N DC drive. 
+/** \brief Gives the status of the drive pin on the dc drive. 
  *  \return int : actual state of the drive.
  */
 int axialMotor::getDriveState()
@@ -292,38 +306,47 @@ int axialMotor::getDriveState()
   return digitalRead(enAPin);
 }
 
-/** \brief Gives the arduino pin of the L298N drive pin . 
- *  \return int : pin where the drive is connected to.
+/** \brief Gives the arduino pin of the drive pin . 
+ *  \return int : pin where the drive pin of the dc drive is connected to.
  */
 int axialMotor::getDrivePin()
 {
   return enAPin;
 }
 
-/** \brief Bring the robot go to a specific position. It computes the clicks needed, compares it to the actual clicks and moves the robot accordingly. 
- *  \param percentageOfTravel : int value corresponding to the percentage (ex: 10, 25, etc.) of the rail you want to be on.
- *  \return bool : Returns true.
+/** \brief Bring the robot go to a specific position. It computes the clicks needed, compares it to the actual clicks and moves the robot accordingly with setMotorState().
+ *  \param encPosition : Int value of the actual position of the arm.
+ *  \param requiredPosition : Int value of the wanted position of the arm.
+ *  \return bool : Returns true when done.
  */
 bool axialMotor::goToPosition(int encPosition,int requiredPosition)
 {
   int positionInClicks = positionToClicks(requiredPosition);
-  int tolerance = abs(encPosition - positionInClicks);
-  if (tolerance > 4)
+  int tolerance = abs(positionInClicks - encPosition);
+  //Serial.println("Tolérance : ");
+  Serial.println(positionInClicks);
+  if (tolerance >= 25) //if tolerance not reached
   {
     
-    if (encPosition - positionInClicks > 0)
-    {
+    if (positionInClicks - encPosition  < 0)
+    { 
+      Serial.print("position actuelle: ");
+      Serial.println(encPosition );
+      Serial.print("position Requise: ");
+      Serial.println(positionInClicks);
+      Serial.print("Différence: ");
+      Serial.println(encPosition-positionInClicks);
       setMotorState(1);
       return true;
     }
     
-    else if (encPosition - positionInClicks < 0)
+    else if (positionInClicks - encPosition > 0)
     {
       setMotorState(0);
       return true;
     }
   }
- else
+ else if (tolerance < 25)
  {
     setMotorState(-1);
     return true;
@@ -337,16 +360,22 @@ bool axialMotor::goToPosition(int encPosition,int requiredPosition)
 int axialMotor::positionToClicks(int requiredPosition)
 {
 
-  double percent = double(requiredPosition)/totalIncrementOfSlider;
-  return homePosition - (percent * totalClicksOnRobot) ;
+  double percent = (double)requiredPosition/totalIncrementOfSlider; 
+  return homePosition + (percent * totalClicksOnRobot) ;
 }
 
+/** \brief modify the calibration case.
+ *  \param newCaseValue : int value corresponding to the new case to run.
+ */
 void  axialMotor::modifyCalibrationCase(int newCaseValue)
 {
     calibrationCase = newCaseValue;  
 }
 
-long  axialMotor::getCalibrationCase()
+/** \brief Gives the actual calibration case.
+ *  \return long : Value of the calibration case
+  */
+int  axialMotor::getCalibrationCase()
 {
   return calibrationCase;
 }

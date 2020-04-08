@@ -27,10 +27,12 @@ This tab makes it possible to open and close the drawers. Note that this feature
 
 
 ## Hardware Requirements
-* PC running Windows (may also run on other platforms, but hasn't been testes)
-* OpenCR board
-* Dynamixel motors
-* TODO: VERTICAL AXIS REQUIREMENTS
+* 1x PC running Windows (may also run on other platforms, but hasn't been testes)
+* 1x OpenCR board
+* 3x Dynamixel motors
+* 2x Twidec NJK-5002J inductive proximity sensor
+* 1x L298N DC motor drive
+* 1x Cytron 12v DC motor
 
 ## Software requirements
 
@@ -59,7 +61,11 @@ All software documentation can be viewed [here](https://jeremiebourque1.github.i
 
 
 ## Hardware documentation
-TODO
+* DC driver L298N documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/DC motor drive)
+* Twidec NJK-5002J Inductive limit switch documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Limit switch)
+* Cytron 12v DC motor documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Cytron DC motor)
+* OpenCR documentation can be viewed [here] (https://jeremiebourque1.github.io/projetS4/electronic/OpenCR)
+For wiring images using arduino mega2560 : ![Image of the wiring](https://jeremiebourque1.github.com/images/arduino montage)
 
 ## Unit tests
 The application is tested using the unittest python module. To run the tests, open a command prompt, change the directory to the project’s directory and run this command: `python -m unittest discover`

@@ -10,7 +10,7 @@ class axialMotor
   int runAxialCalibration(int cas,int newHomePosition);
   void setMotorState(int stateValue);
   void setEnableDrive(bool driveValue);
-  void runIt(long encPosition,bool* slowItTOP, bool* slowItBOT, int requiredPosition);
+  void runIt(long encPosition,bool* slowItTOP, bool* slowItBOT, int requiredPosition, bool buttonCalibration);
   int getMotorState();
   int getDriveState();
   int getProximitySensorPin(int sensorNumber);
@@ -20,7 +20,7 @@ class axialMotor
   bool goToPosition(int encPosition,int requiredPosition);
   int positionToClicks(int lengthCm);
   void modifyCalibrationCase(int newCaseValue);
-  long getCalibrationCase();
+  int getCalibrationCase();
   Encoder* enc;
   
   private:

@@ -1,10 +1,6 @@
 #include <Arduino.h>
 //#include "dynamixel.h"
 #include "axialMotor.h"
-// We used those links to modify encoder.cpp
-//https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
-//http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
-#include "encoder/Encoder.cpp"
 
 // Declare global variables
 const int MESSAGE_SIZE = 19;
@@ -68,15 +64,15 @@ axialMotor test; //classe test
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
   //while (!Serial);
-  mot1.init();
-  mot2.init();
-  mot3.init();
+//  mot1.init();
+//  mot2.init();
+//  mot3.init();
   //dataPack outgoingMessage{(byte)'s',(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
   //sendMessage(outgoingMessage);
   pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, LOW);
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, LOW);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
   pinMode(test.getMotorPin(1),OUTPUT);
   pinMode(test.getMotorPin(2),OUTPUT);
   pinMode(test.getDrivePin(),OUTPUT);
@@ -84,10 +80,10 @@ void setup() {
   pinMode(38,OUTPUT); //power for one of the sensor
   digitalWrite(38,HIGH); //power for one of the sensor
   test.setEnableDrive(true);
-  test.modifyCalibrationCase(-1);
-  test.setMotorState(-1);
+  test.modifyCalibrationCase(-2);
+  test.setMotorState(0);
 }
-
+bool buttonCalibration = false;
 int requiredPosition = 2000;
 bool slowItTOP = false;
 bool slowItBOT = false;
@@ -95,13 +91,15 @@ bool slowItBOT = false;
 void loop() {
 
   long encPosition = test.enc->read();
+  
+  test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
 
-  test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition);
 
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
     dataPack data;
+   // test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,data.buttonCalibration);
     if (readDataToStruct(&data))
     {
       // Debug
@@ -215,9 +213,9 @@ void sendMessage(dataPack message)
 */
 void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
 {
-    mot1.moveMotor(p1);
-    mot2.moveMotor(p2);
-    mot3.moveMotor(p3);
+//    mot1.moveMotor(p1);
+//    mot2.moveMotor(p2);
+//    mot3.moveMotor(p3);
 }
 
 /** \brief move motors to an incremental position
@@ -235,17 +233,17 @@ void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3)
 
 void stopMotors()
 {
-  mot1.torque(false);
-  mot2.torque(false);
-  mot3.torque(false);
+//  mot1.torque(false);
+//  mot2.torque(false);
+//  mot3.torque(false);
 }
 
 void startMotors()
 {
-  mot1.torque(true);
-  mot2.torque(true);
-  mot3.torque(true);
-}
+//  mot1.torque(true);
+//  mot2.torque(true);
+//  mot3.torque(true);
+} 
 
 void trigShouldSlowDownPin1()
 {
