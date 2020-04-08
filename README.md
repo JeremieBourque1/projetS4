@@ -64,7 +64,7 @@ All software documentation can be viewed [here](https://jeremiebourque1.github.i
 ### Robotic arm prototype
 The build of materials for the robot arm prototype can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/BOM_proto.xlsx?raw=true)
 ### Robotic arm shell
-TODO
+Everything concerning the arm shell can be found [here](https://github.com/JeremieBourque1/projetS4/tree/master/Arm%20Shell)
 ### Vertical axis
 TODO
 
