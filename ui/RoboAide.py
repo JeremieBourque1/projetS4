@@ -980,6 +980,9 @@ class MainWindow(QMainWindow):
         self.sendMessage('c')
 
     def stopMotors(self):
+        """
+        Signal all motors to stop and empty message deque
+        """
         self.shouldStop = True
         self.msgDeque.clear()
         self.sendMessage('a')
