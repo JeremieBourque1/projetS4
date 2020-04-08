@@ -2,11 +2,12 @@
 
 [![Build Status](https://travis-ci.com/JeremieBourque1/projetS4.svg?branch=master)](https://travis-ci.com/JeremieBourque1/projetS4)
 
+
 ## Description
 RoboAide is a project to improve a DIY robotic arm used for mobility assistance. This repository contains code for a GUI application, Arduino code for the control of the arm's motors as well as CAD parts for a 3D printed shell for the arm segments and joints. The application is made in Python using PySide2 and communicates the desired motor positions via USB serial communication with the Arduio/OpenCR board.<br/>
 Due to the team's limitation in regards to access to the robotic arm, a smaller prototype version of the arm was built and it was with it that the software was written and tested on. However, the 3D printed shell was designed for the actual arm. In a future version, the software will be adapted for the real arm as well.
 
-![Image of the robotic arm prototype](https://github.com/JeremieBourque1/projetS4/blob/master/images/arm_prototype.png)
+![Image of arm prototype and GUI app](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/arm_and_gui.jpg)
 
 ## Overview of the application
 
@@ -42,7 +43,7 @@ This tab makes it possible to open and close the drawers. Note that this feature
 * PySide2 
 * PySerial
 
-The necessary Pyton libraries can be installed with `pip install -r requirements.txt`
+The necessary Python libraries can be installed with `pip install -r requirements.txt`
 
 ### Controller dependencies
 * Arduino IDE (https://www.arduino.cc/en/main/software)
@@ -66,12 +67,6 @@ The build of materials for the robot arm prototype can be viewed [here](https://
 TODO
 ### Vertical axis
 TODO
-### OpenCr documentation
-TODO
-### Dynamixel documentation
-TODO
-
-
 
 ## Unit tests
 The application is tested using the unittest python module. To run the tests, open a command prompt, change the directory to the project’s directory and run this command: `python -m unittest discover`
