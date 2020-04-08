@@ -1,10 +1,13 @@
 #include <Arduino.h>
 //#include "dynamixel.h"
 #include "axialMotor.h"
+// We used those links to modify encoder.cpp
+//https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
+//http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
+#include "encoder/Encoder.cpp"
 
-
-// Declare constants
-const int MESSAGE_SIZE = 13;
+// Declare global variables
+const int MESSAGE_SIZE = 19;
 char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
@@ -19,18 +22,28 @@ const int id2 = 223;
    \brief A structure containing message data
 */
 struct dataPack {
+  //! Operation mode
+  char mode;
   //! Motor 1 position
-  uint16_t p1; //moteur bras
+  uint16_t p1;
   //! Motor 2 position
   uint16_t p2;
   //! Motor 3 position
-  uint16_t p3; //moteur bras
+  uint16_t p3;
   //! Motor 4 position
   uint16_t p4; // Vertical motor
   //! Motor 5 position
   uint16_t p5;
   //! Motor 6 position
   uint16_t p6;
+  //! Stop indicator
+  bool shouldStop;
+  //! Drawer 1 state
+  bool drawer1;
+  //! Drawer 2 state
+  bool drawer2;
+  //! Drawer 3 state
+  bool drawer3;
   //! End of message character
   char last;
 };
@@ -39,23 +52,27 @@ struct dataPack {
 bool readDataToStruct(dataPack *data);
 void readMessage(char *message);
 void sendMessage(dataPack message);
+void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
+void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
+void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3);
+void stopMotors();
+void startMotors();
+
 void trigShouldSlowDownPin1();
 void trigShouldSlowDownPin2();
 
 //axialMotor axialMotor(53,-1,A1,A2,19,20,2,3);
 axialMotor test; //classe test
-//Encoder myEnc(2, 3); //classe de lecture de l'encodeur
 
 // Arduino functions
 void setup() {
   Serial.begin(9600); // set the baud rate, must be the same for both machines
-  while (!Serial);
-//  mot1.init();
-//  mot2.init();
-//  mot3.init();
-//  dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
-//  sendMessage(outgoingMessage);
-
+  //while (!Serial);
+  mot1.init();
+  mot2.init();
+  mot3.init();
+  //dataPack outgoingMessage{(byte)'s',(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
+  //sendMessage(outgoingMessage);
   pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
   attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, LOW);
@@ -74,11 +91,11 @@ void setup() {
 int requiredPosition = 2000;
 bool slowItTOP = false;
 bool slowItBOT = false;
-  
+
 void loop() {
-  
+
   long encPosition = test.enc->read();
-  
+
   test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition);
 
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
@@ -97,6 +114,32 @@ void loop() {
       //Serial.println(data.end);
       //byte* serializedMessage = (byte*)&data, sizeof(data);
       //Serial.println(serializedMessage);
+      if(data.shouldStop == false)
+      {
+        if(data.mode == 'a')
+        {
+          moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+          setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
+        }
+        else if(data.mode == 'i')
+        {
+          moveIncremental(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+          setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
+        }
+        else if(data.mode == 's')
+        {
+          // Do nothing apart from sending message
+        }
+        else if(data.mode == 'c')
+        {
+          //TODO: connect to calibration function
+        }
+      }
+      else
+      {
+        stopMotors();
+        startMotors();
+      }
 
 
       // TODO: Call move motor functinons
@@ -104,7 +147,7 @@ void loop() {
 //      mot2.moveMotor(data.p2);
 //      mot3.moveMotor(data.p3);
 
-//      dataPack outgoingMessage{(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0};
+//      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (bool)data.shouldStop, (byte)'\0'};
 //      sendMessage(outgoingMessage);
     }
     else
@@ -166,6 +209,44 @@ void sendMessage(dataPack message)
   Serial.write((byte*)&message, sizeof(message));
 }
 
+
+/** \brief move motors to an absolute position
+    \param p1, ..., p6 : position for each motor
+*/
+void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
+{
+    mot1.moveMotor(p1);
+    mot2.moveMotor(p2);
+    mot3.moveMotor(p3);
+}
+
+/** \brief move motors to an incremental position
+    \param p1, ..., p6 : position for each motor
+*/
+void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6)
+{
+  //TODO
+}
+
+void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3)
+{
+  //TODO
+}
+
+void stopMotors()
+{
+  mot1.torque(false);
+  mot2.torque(false);
+  mot3.torque(false);
+}
+
+void startMotors()
+{
+  mot1.torque(true);
+  mot2.torque(true);
+  mot3.torque(true);
+}
+
 void trigShouldSlowDownPin1()
 {
     slowItTOP = true;
@@ -178,7 +259,7 @@ void trigShouldSlowDownPin1()
 void trigShouldSlowDownPin2()
 {
   slowItBOT = true;
-    
+
   if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
   {
     test.setMotorState(-1);

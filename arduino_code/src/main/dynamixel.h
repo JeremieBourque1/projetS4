@@ -68,10 +68,8 @@ class Dynamixel {
         //Serial.println(model_number);
         pingSuccess = true;
       }
-      dxl_wb.setMultiTurnControlMode(id);
       dxl_wb.setNormalDirection(id);
-      setJointMode();
-      dxl_wb.setMultiTurnControlMode(id);
+      setOperatingMode();
       if(initSuccess && pingSuccess)
       {
         //Serial.print("Motor id: ");
@@ -87,11 +85,17 @@ class Dynamixel {
     /** \brief Set the dynamixel in joint mode
       * \return success (bool)
       */
-    bool setJointMode()
+    bool setOperatingMode()
     {
       const char *log;
       bool result = false;
-      result = dxl_wb.jointMode(id, 100, 0, &log);
+      //result = dxl_wb.jointMode(id, 150, 10, &log);
+      result = dxl_wb.setExtendedPositionControlMode(id ,&log);
+      //Serial.println(log);
+      dxl_wb.writeRegister(id,"Profile_Acceleration",10,&log);
+      //Serial.println(log);
+      dxl_wb.writeRegister(id,"Profile_Velocity",150,&log);
+      dxl_wb.torqueOn(id);
       if (result == false)
       {
         //Serial.println(log);
@@ -111,8 +115,8 @@ class Dynamixel {
       */
     void moveMotor(int32_t pos)
     {
-      int goalPos = pos * gearRatio;
-      dxl_wb.goalPosition(id, goalPos);
+      int32_t goalPos = pos * gearRatio;
+      dxl_wb.goalPosition(id, (int32_t)goalPos);
       //Serial.println("Dynamixel is moving...");
     }
 
@@ -125,5 +129,11 @@ class Dynamixel {
       dxl_wb.getPresentPositionData(id, &data);
       uint16_t pos = data/gearRatio;
       return pos; 
+    }
+
+    void torque(bool onoff)
+    {
+      
+      dxl_wb.torque(id, onoff);
     }
 };

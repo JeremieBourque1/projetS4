@@ -9,18 +9,18 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
-from PySide2.QtCore import QRect, Qt, QThread, QMutex
+from PySide2.QtCore import QRect, Qt, QMutex, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
+from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from ui.Drawer import Drawer
+from collections import deque
 import sys
 import warnings
 import struct
-import serial
-import time
 import os
 import json
-from collections import deque
-import serial.tools.list_ports
-import threading
+import time
+
 
 # To remove the following warning: DeprecationWarning: an integer is required
 # (got type PySide2.QtWidgets.QDialogButtonBox.StandardButton).
@@ -29,56 +29,61 @@ import threading
 warnings.filterwarnings("ignore","an integer is required", DeprecationWarning)
 
 # Change working directory to this script's directory to easily access mainwindow.ui
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 ## App icon
 icon = 'icon.png'
-## Serial communication port
-ports = serial.tools.list_ports.comports()
-ports_list = ['Select a communication port']
-ports_list.extend(ports)
 
-## Robotic arm's number of motors
-numberOfMotors = 6
-
-# Reference for the documentation https://www.youtube.com/watch?v=yUe46581x58
-# Ignore the part with the py_filter.py!!
-# To see the doc go to docs->html->index.html
-
-## Define struct format for communicating messages
-# H (short, 2 bytes) : motor position
-# message size = 12 bytes
-structDefinition = '6Hc'
-s = struct.Struct(structDefinition)
-messageSize = struct.calcsize(structDefinition)
-
-
-def initSerialConnection(port):
+class playSequence(QThread):
     """
-    Initialize serial communication with a specified port
-    :param port: serial port name
-    :return: serial object and bool indicating if connection was successful
+    Tread to send the different positions to the motors during a sequence
     """
-    try:
-        ser = serial.Serial(port, 9600, timeout=0.1)
-        print("Connected to %s" % port)
-        connected = True
-    except serial.serialutil.SerialException:
-        print("Failed to connect to %s." % port)
-        ser = None
-        connected = False
-    return ser, connected
+    def __init__(self,moves,motors, listOfSequencesHandler, mainWindow):
+        """
+        Initialization of the play sequence thread
+        :param moves: the moves of the sequence containing the different positions to reach
+        :param motors: the motors of the robot
+        :param listOfSequencesHandler: the handler of the different sequences
+        :param mainWindow: the main window of the UI
+        """
+        super(playSequence, self).__init__()
+        self.__moves=moves
+        self.__motors=motors
+        self.__listOfSequencesHandler = listOfSequencesHandler
+        self.__mainWindow = mainWindow
+        self.finished.connect(self.stop)
+
+    def run(self):
+        for move in self.__moves:
+            for motor in self.__motors:
+                self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+            for motor in self.__motors:
+                while self.__motors[motor].getCurrentPosition() < self.__motors[motor].getGoalPosition() - 10 \
+                        or self.__motors[motor].getCurrentPosition() > self.__motors[motor].getGoalPosition() + 10:
+                    if not self.__mainWindow.shouldStop:
+                        # print("current position:" + str(self.__motors[motor].getCurrentPosition()))
+                        # print("goal position:" + str(self.__motors[motor].getGoalPosition()))
+                        self.__motors[motor].setGoalPosition(move.getMotorPosition(motor))
+                        self.msleep(250)
+                    else:
+                        break
+
+
+    def stop(self):
+        self.__listOfSequencesHandler.robotInMotionMessage.accept()
+        self.__listOfSequencesHandler.enableUi()
+        self.__mainWindow.shouldStop = False
 
 
 def loadSequences(listOfSequenceHandler,motors):
     """
-    To load the saved sequence in the save.json file and put them in the list of sequence
+    To load the saved sequence in the SaveSequence.json file and put them in the list of sequence
     :param listOfSequenceHandler: To add the sequences to the list
     :param motors: the motors of the robotic arm
     :return: No return
     """
     try:
-        with open('save.json') as save:
+        with open('SaveSequence.json') as save:
             savedListOfSequences = json.load(save)
         for sequence in savedListOfSequences:
             for sequenceName in sequence:
@@ -92,73 +97,11 @@ def loadSequences(listOfSequenceHandler,motors):
     except FileNotFoundError:
         print("Save file not found")
 
-
-class MessageReception(QThread):
-    """
-    Class for a thread that handles incoming serial messages
-    """
-    def __init__(self, mainWindow):
-        super(MessageReception, self).__init__()
-        self.mainWindow = mainWindow
-        self.shouldRun = True
-        self.counter = 0
-        self.firstMessage = True
-
-    def run(self):
-        print("Message Reception thread started")
-        while self.shouldRun:
-            message = self.mainWindow.comm.read(messageSize+1)  # TODO: Find out why an extra byte is received (only happens with openCr)
-            if len(message) == messageSize+1:
-                print("message received")
-                unpacked_msg = s.unpack(message[:-1])  # Unpack message
-                print(str(self.counter) + ": ", end='')
-                print(unpacked_msg)
-                self.counter += 1
-                self.setMotorCurrentPosition(unpacked_msg)
-
-    def stop(self):
-        self.shouldRun = False
-        print("Stopping Message Reception thread")
-
-    def setMotorCurrentPosition(self, msg):
-        for i in range(numberOfMotors):
-            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
-        if self.firstMessage:
-            self.mainWindow.initializeSliderPositions()
-            self.firstMessage = False
-
-
-class MessageTransmission(QThread):
-    """
-    Class for a thread that handles outgoing serial messages
-    """
-    def __init__(self, mainWindow):
-        super(MessageTransmission, self).__init__()
-        self.mainWindow = mainWindow
-        self.shouldRun = True
-        self.counter = 0
-        self.firstMessage = True
-
-    def run(self):
-        print("Message Transmission thread started")
-        while self.shouldRun:
-            self.sleep(0.1)
-            if len(self.mainWindow.msgDeque) > 0:
-                self.mainWindow.msgMu.lock()
-                print("deque length: %d" % len(self.mainWindow.msgDeque))
-                self.mainWindow.comm.write(self.mainWindow.msgDeque.popleft())
-                self.mainWindow.msgMu.unlock()
-
-    def stop(self):
-        self.shouldRun = False
-        print("Stopping Message Transmission thread")
-
-
 class ListOfSequencesHandler:
     """
     Handler for the list of sequences
     """
-    def __init__(self, ui, motors = {}):
+    def __init__(self, mainWindow, motors):
         """
         Initializtion of the handler for the list of sequences
         :param ui: The ui in which the list of sequence is in
@@ -167,13 +110,30 @@ class ListOfSequencesHandler:
         ## The dictionary of all the motors
         self.__motors = motors
         ## The list of sequence
-        self.__listOfSequences = ui.listOfSequences
+        self.__listOfSequences = mainWindow.ui.listOfSequences
+        self.__listOfSequences.itemDoubleClicked.connect(self.playSequence)
         ## The create a new sequence button
-        self.__createSequenceButton = ui.createSequenceButton
+        self.__createSequenceButton = mainWindow.ui.createSequenceButton
         ## The ui in which the list of sequence is in
-        self.__ui = ui
+        self.__ui = mainWindow.ui
+        ## The main window of the ui
+        self.__mainWindow = mainWindow
         ## The window in which the new sequence will be created
         self.__window = None
+        ## Thread to send the sequence to the motors
+        self.playSequenceThread = None
+        ## Message to make the user put a name to the sequence
+        # TODO: Set the size of the message to something appropriate
+        self.robotInMotionMessage = QMessageBox()
+        self.robotInMotionMessage.setIcon(QMessageBox.Information)
+        self.robotInMotionMessage.setWindowIcon(QIcon(icon))
+        self.robotInMotionMessage.setText("Robot is in motion")
+        self.robotInMotionMessage.addButton(QMessageBox.Abort)
+        self.robotInMotionMessage.rejected.connect(self.__mainWindow.stopMotors)
+        self.robotInMotionMessage.rejected.connect(self.enableUi)
+        # self.robotInMotionMessage.setStandardButtons(QMessageBox.Ok)
+        # Renable the create sequence window and closes the message
+        # self.robotInMotionMessage.accepted.connect(self.enableUi())
 
         # Create a new window when the create sequence button is clicked
         self.__createSequenceButton.clicked.connect(self.createWindow)
@@ -199,7 +159,7 @@ class ListOfSequencesHandler:
         for item in listItems:
             self.__listOfSequences.takeItem(self.__listOfSequences.row(item))
             # Load the save file
-            with open('save.json', 'r') as save_file:
+            with open('SaveSequence.json', 'r') as save_file:
                 savedListOfSequences = json.load(save_file)
             # Search for the sequence that needs to be deleted
             indexSequence = -1
@@ -212,7 +172,7 @@ class ListOfSequencesHandler:
                 savedListOfSequences.pop(indexSequence)
 
             # Rewrite the save file without the deleted sequence
-            with open('save.json', 'w') as save_file:
+            with open('SaveSequence.json', 'w') as save_file:
                 json.dump(savedListOfSequences, save_file)
 
     def createWindow(self, modifySequence = False):
@@ -255,7 +215,15 @@ class ListOfSequencesHandler:
         Accessor to the selected items of the list
         :return: the selected items
         """
+        # Returns the only item in the list because the list is set to be
         return self.__listOfSequences.selectedItems()
+
+    def playSequence(self):
+        self.playSequenceThread = playSequence(self.getSelectedItems()[0].getMoves(), self.__motors,self,self.__mainWindow)
+        self.__ui.setEnabled(False)
+        # self.robotInMotionMessage.rejected.connect(self.playSequenceThread.quit)
+        self.playSequenceThread.start()
+        self.robotInMotionMessage.exec_()
 
 class CreateSequenceWindow(QDialog):
     """
@@ -285,7 +253,7 @@ class CreateSequenceWindow(QDialog):
         self.__wantedPositions = {}
         ## The layout of the create sequence window
         self.__layout = QVBoxLayout(self)
-        ## The widget for the name of the sequence
+        ## The widget for the name of the sequenc
         self.__nameEntry = QLineEdit()
         self.__nameEntry.setText(self.__sequence.getName())
         ## The label for the widget in which the name of the sequence is written
@@ -307,13 +275,17 @@ class CreateSequenceWindow(QDialog):
 
         # Put the sliders of the create sequence window in a list
         ## List of sliders in the create sequence window
+        # TODO: put the following in a loop
         self.listOfSliders = []
+        dictOfSlider = dict()
+
         for motor in self.__motors:
-            slider = QSlider()
-            slider.setOrientation(Qt.Horizontal)
-            slider.valueChanged.connect(
-                lambda: self.__motors[motor].setGoalPosition(slider.value()))
-            self.listOfSliders.append(slider)
+            dictOfSlider[motor] = QSlider(Qt.Horizontal)
+            dictOfSlider[motor].setMaximum(4095)
+            dictOfSlider[motor].setValue(self.__motors[motor].getCurrentPosition())
+            dictOfSlider[motor].sliderMoved.connect(self.__motors[motor].setGoalPosition)
+            print(self.__motors[motor].getName())
+            self.listOfSliders.append(dictOfSlider[motor])
 
         ## Message to make the user put a name to the sequence
         self.__noNameMessage = QMessageBox()
@@ -394,10 +366,10 @@ class CreateSequenceWindow(QDialog):
         if self.__nameEntry.text() != "":
             # Load previously saved sequences
             try:
-                with open('save.json') as save:
+                with open('SaveSequence.json') as save:
                     savedListOfSequences = json.load(save)
             except FileNotFoundError:
-                print("Save file not found")
+                # print("Save file not found")
                 savedListOfSequences = []
             if modifySequence:
                 # Get the item that needs to be modified
@@ -421,7 +393,7 @@ class CreateSequenceWindow(QDialog):
                         savedListOfSequences.insert(indexOfTheSequence,newSequence)
 
                         # Write the sequences to the file
-                        with open('save.json', 'w') as outfile:
+                        with open('SaveSequence.json', 'w') as outfile:
                             json.dump(savedListOfSequences, outfile)
 
                         self.accept()
@@ -439,7 +411,7 @@ class CreateSequenceWindow(QDialog):
                 savedListOfSequences.append(newSequence)
 
                 # Write the sequences to the file
-                with open('save.json', 'w') as outfile:
+                with open('SaveSequence.json', 'w') as outfile:
                     json.dump(savedListOfSequences, outfile)
 
                 self.accept()
@@ -512,7 +484,14 @@ class CreateSequenceWindow(QDialog):
         :param moveItem: the move that was double clicked
         :return: No return
         """
-        moveItem.doubleClickEvent()
+        moveItem.goToMoveOfTheLabel()
+        self.updateSlidersPositions()
+
+    def updateSlidersPositions(self):
+        counterMotors = 0
+        for motor in self.__motors:
+            self.listOfSliders[counterMotors].setValue(self.__motors[motor].getGoalPosition())
+            counterMotors += 1
 
     def enableWindow(self):
         """
@@ -564,6 +543,8 @@ class CreateSequenceWindow(QDialog):
         moveToModify = label.getMove()
         moveToModify.isNew = False
         label.setBackground(QBrush(Qt.darkCyan))
+        label.goToMoveOfTheLabel()
+        self.updateSlidersPositions()
 
 class moveLabel(QListWidgetItem):
     """
@@ -584,14 +565,13 @@ class moveLabel(QListWidgetItem):
         self.__motors = motors
         self.setText(text)
 
-    def doubleClickEvent(self):
+    def goToMoveOfTheLabel(self):
         """
         Handles the event when the move lable is double clicked
-        :return: No return
+        :return: No return1
         """
-        # TODO: make the motors move to their respective positions
-        for motor in self.__motors:
-            print(motor + " "+ str(self.__move.getMotorPosition(motor)))
+        self.__move.goToMove()
+
 
     def getMove(self):
         """
@@ -684,9 +664,7 @@ class Move:
         :param position: The position of the motor
         :return: Return None if succesful and an error string if not
         """
-        #TODO: call setPosition when the slider moves and not when next move is clicked
         if motorName in self.__motors:
-            #self.__motors[motorName].setPosition(position)
             self.__movePositions[motorName] = position
             return None
         else:
@@ -705,6 +683,10 @@ class Move:
 
     def getMovePositions(self):
         return self.__movePositions
+
+    def goToMove(self):
+        for motor in self.__motors:
+            self.__motors[motor].setGoalPosition(self.getMotorPosition(motor))
 
 class Motor:
     """
@@ -736,16 +718,21 @@ class Motor:
         :param pos: the position
         :return: No return
         """
+        self.mu.lock()
         self.__goalPosition=pos
+        self.mu.unlock()
         print("%s: %d" % (self.__name, pos))
-        sendMessage(self.__window)
+        self.__window.sendMessage('a')
 
     def getGoalPosition(self):
         """
         Accessor of the goal position
         :return: The goal position of the motor
         """
-        return self.__goalPosition
+        self.mu.lock()
+        pos = self.__goalPosition
+        self.mu.unlock()
+        return pos
 
     def setCurrentPosition(self, pos):
         """
@@ -806,6 +793,8 @@ class MainWindow(QMainWindow):
         MainWindow initialization
         """
         super(MainWindow, self).__init__()
+        ## app
+        self.app = app
         ## ui object
         self.ui = QUiLoader().load("mainwindow.ui")
         self.ui.show()
@@ -817,72 +806,106 @@ class MainWindow(QMainWindow):
         self.setIcon()
         self.msgMu = QMutex()
 
+        self.numberOfMotors = 6
+        self.s, self.messageSize = makeStruct()
+
         # Connect button signals
-        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+        self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
 
+        self.ports_list = scanAvailablePorts()
         self.populatePortsList()
-
-        # Serial communication
-        ## Message reception QThread object
-        self.msgReception = MessageReception(self)
-        ## Message transmission QThread object
-        self.msgTransmission = MessageTransmission(self)
-        app.aboutToQuit.connect(self.msgReception.stop)
-        app.aboutToQuit.connect(self.msgTransmission.stop)
-        self.comm = None
-        self.serialConnected = None
-        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
-
-        ## Outgoing message deque
-        self.msgDeque = deque(maxlen=3)
 
         # ---------------
         ## Dictionnary of all motor objects
         self.dictMot = dict()
-        for i in range(1, numberOfMotors+1):
+        for i in range(1, self.numberOfMotors+1):
             mot = Motor(self, "motor" + str(i))
             self.dictMot[mot.getName()] = mot
         # ---------------
 
-        self.initializeSliderPositions()
+        ## List of drawers
+        self.drawersList = []
+        for i in range(3):
+            self.drawersList.append(Drawer(self, "drawer" + str(i+1)))
+
+        self.updateSliderPositions()
 
         ## ListOfSequencesHandler object
-        self.__listOfSenquenceHandler = ListOfSequencesHandler(self.ui, self.dictMot)
+        self.__listOfSenquenceHandler = ListOfSequencesHandler(self, self.dictMot)
 
         # load the last save
         loadSequences(self.__listOfSenquenceHandler,self.dictMot)
 
         # Connect the slider signals
-        self.ui.slider_mot1.valueChanged.connect(
+        self.ui.slider_mot1.sliderMoved.connect(
             lambda: self.dictMot["motor1"].setGoalPosition(self.ui.slider_mot1.value()))
-        self.ui.slider_mot2.valueChanged.connect(
+        self.ui.slider_mot2.sliderMoved.connect(
             lambda: self.dictMot["motor2"].setGoalPosition(self.ui.slider_mot2.value()))
-        self.ui.slider_mot3.valueChanged.connect(
+        self.ui.slider_mot3.sliderMoved.connect(
             lambda: self.dictMot["motor3"].setGoalPosition(self.ui.slider_mot3.value()))
-        self.ui.slider_mot4.valueChanged.connect(
+        self.ui.slider_mot4.sliderMoved.connect(
             lambda: self.dictMot["motor4"].setGoalPosition(self.ui.slider_mot4.value()))
-        self.ui.slider_mot5.valueChanged.connect(
+        self.ui.slider_mot5.sliderMoved.connect(
             lambda: self.dictMot["motor5"].setGoalPosition(self.ui.slider_mot5.value()))
-        self.ui.slider_mot6.valueChanged.connect(
+        self.ui.slider_mot6.sliderMoved.connect(
             lambda: self.dictMot["motor6"].setGoalPosition(self.ui.slider_mot6.value()))
 
         # Connect button signals
-        self.ui.calibrateVerticalAxisButton.clicked.connect(calibrateVerticalAxis)
+        self.ui.calibrateVerticalAxisButton.clicked.connect(self.calibrateVerticalAxis)
 
-    def connect_port(self):
+        # Connect drawer buttons signals
+        self.ui.drawer1Open.clicked.connect(self.drawersList[0].open)
+        self.ui.drawer2Open.clicked.connect(self.drawersList[1].open)
+        self.ui.drawer3Open.clicked.connect(self.drawersList[2].open)
+        self.ui.drawer1Close.clicked.connect(self.drawersList[0].close)
+        self.ui.drawer2Close.clicked.connect(self.drawersList[1].close)
+        self.ui.drawer3Close.clicked.connect(self.drawersList[2].close)
+
+        # Connect the tab changed with updating the sliders
+        self.ui.tabWidget.currentChanged.connect(self.updateSliderPositions)
+
+        # Serial communication
+        ## Outgoing message deque
+        self.msgDeque = deque(maxlen=3)
+        ## Stop indicator for the motors
+        self.shouldStop = False
+        ## Message reception QThread object
+        self.msgReception = MessageReception(self)
+        ## Message transmission QThread object
+        self.msgTransmission = MessageTransmission(self)
+        self.app.aboutToQuit.connect(self.msgReception.stop)
+        self.app.aboutToQuit.connect(self.msgTransmission.stop)
+        self.comm = None
+        self.serialConnected = None
+        try:
+            with open('SavePort.json') as save:
+                savedPort = json.load(save)
+                for index in range(1,len(self.ports_list)):
+                    if self.ports_list[index].device==savedPort:
+                        self.ui.portselection.setCurrentIndex(index)
+                        self.connect_port(savedPort)
+                    else:
+                        print("The last port is not available")
+        except FileNotFoundError:
+            print("SavePort file not found")
+        self.ui.portselection.currentIndexChanged.connect(self.connect_port)
+
+    def connect_port(self, lastPort=None):
         """
-        Connect the selected port of the Arduino
+        Connect the selected port of the controller
+        :param: lastPort: name of the port that was last used
         :return: None
         """
-        commPort = self.ui.portselection.currentText()
-        for index in range(len(ports_list)):
-            result = isinstance(commPort, str)
-            if not result:
-                commPort = ports_list[index].device
+        if isinstance(lastPort, str):
+            commPort = lastPort
+        else:
+            commPort = self.ui.portselection.currentText()
         self.comm, self.serialConnected = initSerialConnection(commPort)
-        app.aboutToQuit.connect(self.comm.close)
-        self.msgReception.start()
-        self.msgTransmission.start()
+        if self.comm is not None:
+            self.app.aboutToQuit.connect(self.comm.close)
+            self.msgReception.start()
+            self.msgTransmission.start()
+            self.sendMessage('s')
 
     def setIcon(self):
         """
@@ -892,20 +915,20 @@ class MainWindow(QMainWindow):
         appIcon = QIcon(icon)
         self.ui.setWindowIcon(appIcon)
 
-    def initializeSliderPositions(self):
+    def updateSliderPositions(self, index = 0):
         """
-        Initialize motor slider positions
+        Update motor slider positions
         :return: None
         """
-        print("Initializing motor slider positions")
-        # TODO: get the position value for each motor
-        self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
-        self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
-        self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
-        self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
-        self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
-        self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
-        print("Finished initializing slider positions")
+        if index == 0:
+            print("Updating motor slider positions")
+            self.ui.slider_mot1.setValue(self.dictMot["motor1"].getCurrentPosition())
+            self.ui.slider_mot2.setValue(self.dictMot["motor2"].getCurrentPosition())
+            self.ui.slider_mot3.setValue(self.dictMot["motor3"].getCurrentPosition())
+            self.ui.slider_mot4.setValue(self.dictMot["motor4"].getCurrentPosition())
+            self.ui.slider_mot5.setValue(self.dictMot["motor5"].getCurrentPosition())
+            self.ui.slider_mot6.setValue(self.dictMot["motor6"].getCurrentPosition())
+            print("Finished initializing slider positions")
 
     def populatePortsList(self):
         """
@@ -913,44 +936,76 @@ class MainWindow(QMainWindow):
         :return: None
         """
         print("Scanning and populating list of available serial ports")
-        for index in range(len(ports_list)):
-            result = isinstance(ports_list[index], str)
+        for index in range(len(self.ports_list)):
+            result = isinstance(self.ports_list[index], str)
             if not result:
-                self.ui.portselection.addItem(ports_list[index].device)
+                self.ui.portselection.addItem(self.ports_list[index].device)
             else:
-                self.ui.portselection.addItem(ports_list[index])
+                self.ui.portselection.addItem(self.ports_list[index])
+
+    def sendMessage(self, mode):
+        """
+        Package message and send on communication port
+        :param mode: mode in which the message should be interpreted by the controller
+        :return: None
+        """
+        if self.serialConnected:
+            values = (mode.encode(),
+                      self.dictMot["motor1"].getGoalPosition(),
+                      self.dictMot["motor2"].getGoalPosition(),
+                      self.dictMot["motor3"].getGoalPosition(),
+                      self.dictMot["motor4"].getGoalPosition(),
+                      self.dictMot["motor5"].getGoalPosition(),
+                      self.dictMot["motor6"].getGoalPosition(),
+                      self.shouldStop,
+                      self.drawersList[0].getState(),
+                      self.drawersList[1].getState(),
+                      self.drawersList[2].getState(),
+                      b'\0')
+            print("Outgoing: ", end='')
+            print(values)
+            packed_data = self.s.pack(*values)
+            self.msgMu.lock()
+            self.msgDeque.append(packed_data)
+            self.msgMu.unlock()
+        else:
+            print("Error sending message, serial not connected")
+
+    def calibrateVerticalAxis(self):
+        """
+        Trigger vertical axis calibration
+        :return: None
+        """
+        print("Calibrating vertical axis")
+        self.sendMessage('c')
+
+    def stopMotors(self):
+        self.shouldStop = True
+        self.msgDeque.clear()
+        self.sendMessage('a')
 
 
-# Send message to Arduino containing all motor values
-def sendMessage(mainWindow):
+def makeStruct():
     """
-    Package message and send on communication port
-    :param mainWindow: mainWindow object
-    :return: None
-    """
-    if mainWindow.serialConnected:
-        values = (mainWindow.dictMot["motor1"].getGoalPosition(),
-                  mainWindow.dictMot["motor2"].getGoalPosition(),
-                  mainWindow.dictMot["motor3"].getGoalPosition(),
-                  mainWindow.dictMot["motor4"].getGoalPosition(),
-                  mainWindow.dictMot["motor5"].getGoalPosition(),
-                  mainWindow.dictMot["motor6"].getGoalPosition(),
-                  b'\0')
-        packed_data = s.pack(*values)
-        mainWindow.msgMu.lock()
-        mainWindow.msgDeque.append(packed_data)
-        mainWindow.msgMu.unlock()
-    else:
-        print("Error sending message, serial not connected")
+    Make the struct and return it along with it's size in bytes
+    :return: struct object, byte size of the struct
 
+    """
+    ## Define struct format for communicating messages
+    # c: mode
+    #       'a' -> absolute (send an absolute position between 0 and 100)
+    #       'i' -> incremental (move from the current position from a certain increment)
+    #       's' -> status (with this mode, the rest of the message is ignored. It's purpose is only for the controller to send it's status)
+    #       'c' -> calibrate vertical axis (rest of the message is ignored)
+    # c: operation mode
+    # 6H: position of all motors
+    # ?: stop indicator for all motors
+    # 3?: open/close drawers (True = open, False = close)
+    # c: end-of-message character
+    structDefinition = 'c6H?3?c'
+    s = struct.Struct(structDefinition)
+    return s, struct.calcsize(structDefinition)
 
-def calibrateVerticalAxis():
-    """
-    Trigger vertical axis calibration
-    :return: None
-    """
-    print("Calibrating vertical axis")
-    # TODO: launch calibration process on controller
 
 
 if __name__ == "__main__":

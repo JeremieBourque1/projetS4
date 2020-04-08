@@ -8,6 +8,14 @@
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_PIN_READ(base, mask)     (((*(base)) & (mask)) ? 1 : 0)
 
+#elif defined(__OPENCR__) || defined(__OPENCM904__)
+
+extern const uint32_t *digital_pin_bitband_table[];
+#define IO_REG_TYPE			uint32_t
+#define PIN_TO_BASEREG(pin)             ((volatile uint32_t *)(digital_pin_bitband_table[(pin)] - 32))
+#define PIN_TO_BITMASK(pin)             (1)
+#define DIRECT_PIN_READ(base, mask)     (((*(base)) & (mask)) ? 1 : 0)
+
 #elif defined(TEENSYDUINO) && (defined(KINETISK) || defined(KINETISL))
 
 #define IO_REG_TYPE			uint8_t
