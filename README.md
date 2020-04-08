@@ -12,17 +12,17 @@ The application is written in Python and is designed to run on Windows but shoul
 The application contains three tabs: "Motor control", which is for moving the arm's motors individually in joint mode, "Sequences", which is for creating move sequences and executing them, and "Drawers", which is for opening and closing drawers.
 
 ### Motor control
-![Image of the motor control tab](https://jeremiebourque1.github.com/images/ui_motorControl)
+![Image of the motor control tab](https://github.com/JeremieBourque1/projetS4/blob/master/images/ui_motorControl.jpg)
 To start the connection, select the appropriate communication port in the drop-down menu. Once connected, moving the sliders will move the motors.
 
 ### Sequences
-![Image of the sequences tab](https://jeremiebourque1.github.com/images/ui_seq)
+![Image of the sequences tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_seq.jpg)
 Here, you can see the list of user-created sequences. To execute a sequence, double click the sequence.
-![Image of the new sequence window](https://jeremiebourque1.github.com/images/ui_newSeq)
+![Image of the new sequence window](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_newSeq.jpg)
 To create a new sequence, click the "Create new sequence" button, which will open this window. You can move the sliders to the desired position, then click "Save move" and create the next move. Double clicking a saved move will move the arm to that position. When done, click "ok".
 
 ### Drawers
-![Image of the drawers tab](https://jeremiebourque1.github.com/images/ui_drawers)
+![Image of the drawers tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_drawers.jpg)
 This tab makes it possible to open and close the drawers. Note that this feature is not yet implemented in the controller, so the buttons currently do nothing. The feature will be implemented in a future version.
 
 
