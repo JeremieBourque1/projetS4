@@ -131,7 +131,18 @@ void loop() {
 
 
 
-      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (bool)data.shouldStop, (byte)'\0'};
+      dataPack outgoingMessage{(byte)'a', 
+                               (int32_t)(mot1.getPosition()), 
+                               (int32_t)(mot2.getPosition()), 
+                               (int32_t)(mot3.getPosition()), 
+                               0, 
+                               0, 
+                               0, 
+                               (bool)data.shouldStop,
+                               (bool)data.drawer1,
+                               (bool)data.drawer2,
+                               (bool)data.drawer3, 
+                               (byte)'\0'};
       sendMessage(outgoingMessage);
     }
     else

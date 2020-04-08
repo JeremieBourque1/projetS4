@@ -56,8 +56,8 @@ class MessageReception(QThread):
         Update drawer state (open/closed)
         :param msg: received message
         """
-        for drawer in self.mainWindow.drawersList:
-            drawer.setState(msg[i+9])
+        for i in range(len(self.mainWindow.drawersList)):
+            self.mainWindow.drawersList[i].setState(msg[i+8])
 
 
 class MessageTransmission(QThread):
