@@ -1044,7 +1044,7 @@ def makeStruct():
     # ?: stop indicator for all motors
     # 3?: open/close drawers (True = open, False = close)
     # c: end-of-message character
-    structDefinition = 'c6H?3?c'
+    structDefinition = '<c6H?3?c'
     s = struct.Struct(structDefinition)
     return s, struct.calcsize(structDefinition)
 

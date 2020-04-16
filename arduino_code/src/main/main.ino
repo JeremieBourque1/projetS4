@@ -45,6 +45,7 @@ struct dataPack {
   bool drawer3;
   //! End of message character
   char last;
+  char last2;
 };
 
 // Function prototypes
@@ -102,7 +103,7 @@ void loop() {
   {
     // Read data
     dataPack data;
-    //test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,false);//data.buttonCalibration
+    test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,false);//data.buttonCalibration
     if (readDataToStruct(&data))
     {
       // Debug
@@ -141,34 +142,20 @@ void loop() {
         stopMotors();
         startMotors();
       }
-
-
-
-    /* dataPack outgoingMessage{(byte)'a',
-                               (int32_t)(mot1.getPosition()),
-                               (int32_t)(mot2.getPosition()),
-                               (int32_t)(mot3.getPosition()),
-                               0,
-                               0,
-                               0,
-                               (bool)data.shouldStop,
-                               (bool)data.drawer1,
-                               (bool)data.drawer2,
-                               (bool)data.drawer3,
-                               (byte)'\0'}; */
                                
       dataPack outgoingMessage{(byte)'a',
                                0,
                                0,
                                0,
-                               0, //(uint16_t)encPosition
+                               (uint16_t)encPosition, //(uint16_t)encPosition
                                0,
                                0,
                                (bool)data.shouldStop,
                                (bool)data.drawer1,
                                (bool)data.drawer2,
                                (bool)data.drawer3,
-                               (byte)'\0'};
+                               (char)'\0',
+                               (char)'\0'};
       sendMessage(outgoingMessage);
     }
     else
@@ -214,7 +201,7 @@ bool readDataToStruct(dataPack *data)
     buf[i] = Serial.read();
     i++;
   }
-  memcpy(data, buf, sizeof(*data));
+  memcpy(data, buf, sizeof(*data)-1);
   if (data->last != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
     return false;
 
