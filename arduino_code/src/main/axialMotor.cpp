@@ -269,13 +269,13 @@ void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int re
   }
   if (calibrationCase == 0)
   {
-    Serial.println("Calibration case = 0");
+    //Serial.println("Calibration case = 0");
     calibrationCase = runAxialCalibration(calibrationCase,encPosition);
     Serial.println(calibrationCase);
   }
   if (calibrationCase == 1 && *slowItTOP == true)
   {
-    Serial.println("Calibration case = 1");
+    //Serial.println("Calibration case = 1");
     calibrationCase = runAxialCalibration(calibrationCase,encPosition);
   }
 
@@ -323,19 +323,18 @@ bool axialMotor::goToPosition(int encPosition,int requiredPosition)
 {
   int positionInClicks = positionToClicks(requiredPosition);
   int tolerance = abs(positionInClicks - encPosition);
-  //Serial.println("Tolérance : ");
-  Serial.println(positionInClicks);
+  //Serial.println(positionInClicks);
   if (tolerance >= 25) //if tolerance not reached
   {
     
     if (positionInClicks - encPosition  < 0)
     { 
-      Serial.print("position actuelle: ");
+      /*Serial.print("position actuelle: ");
       Serial.println(encPosition );
       Serial.print("position Requise: ");
       Serial.println(positionInClicks);
       Serial.print("Différence: ");
-      Serial.println(encPosition-positionInClicks);
+      Serial.println(encPosition-positionInClicks);*/
       setMotorState(1);
       return true;
     }

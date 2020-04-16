@@ -4,7 +4,6 @@
 // We used those links to modify encoder.cpp
 //https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
 //http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
-#include "encoder/Encoder.cpp"
 
 // Declare global variables
 const int MESSAGE_SIZE = 19;
@@ -84,11 +83,11 @@ void setup() {
   pinMode(38,OUTPUT); //power for one of the sensor
   digitalWrite(38,HIGH); //power for one of the sensor
   test.setEnableDrive(true);
-  test.modifyCalibrationCase(-2);
-  test.setMotorState(0);
+  test.modifyCalibrationCase(0);
+  test.setMotorState(-1);
 }
 bool buttonCalibration = false;
-int requiredPosition = 2000;
+int requiredPosition = 10000;
 bool slowItTOP = false;
 bool slowItBOT = false;
 
@@ -96,14 +95,14 @@ void loop() {
 
   long encPosition = test.enc->read();
 
-  test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
+  //test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
 
 
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     // Read data
     dataPack data;
-   // test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,data.buttonCalibration);
+    //test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,false);//data.buttonCalibration
     if (readDataToStruct(&data))
     {
       // Debug
@@ -145,11 +144,24 @@ void loop() {
 
 
 
-      dataPack outgoingMessage{(byte)'a',
+    /* dataPack outgoingMessage{(byte)'a',
                                (int32_t)(mot1.getPosition()),
                                (int32_t)(mot2.getPosition()),
                                (int32_t)(mot3.getPosition()),
                                0,
+                               0,
+                               0,
+                               (bool)data.shouldStop,
+                               (bool)data.drawer1,
+                               (bool)data.drawer2,
+                               (bool)data.drawer3,
+                               (byte)'\0'}; */
+                               
+      dataPack outgoingMessage{(byte)'a',
+                               0,
+                               0,
+                               0,
+                               0, //(uint16_t)encPosition
                                0,
                                0,
                                (bool)data.shouldStop,

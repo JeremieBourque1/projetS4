@@ -20,6 +20,7 @@ class MessageReception(QThread):
         """
         print("Message Reception thread started")
         while self.shouldRun:
+            #print(self.mainWindow.comm.read())
             message = self.mainWindow.comm.read(self.mainWindow.messageSize)  # TODO: Find out why an extra byte is received (only happens with openCr)
             if len(message) == self.mainWindow.messageSize:
                 print("message received")
