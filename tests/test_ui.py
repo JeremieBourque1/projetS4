@@ -1,6 +1,7 @@
 import unittest
 import sys
 import time
+import json
 
 from ui import RoboAide
 from ui.Drawer import Drawer
@@ -11,7 +12,6 @@ from PySide2.QtWidgets import QComboBox
 
 # Start a Qt App to create a window
 app = QApplication(sys.argv)
-
 
 class TestMove(unittest.TestCase):
     def setUp(self):
@@ -58,6 +58,112 @@ class TestMotor(unittest.TestCase):
     def test_set_name(self):
         self.testMotor.setName("Nom")
         self.assertEqual(self.testMotor.getName(),"Nom")
+
+class TestSequence(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+        self.testWindow.comm = DummyComm()
+        self.testSequence = RoboAide.Sequence(self.testWindow.dictMot,"testSequence")
+
+    def test_getName(self):
+        self.assertEqual(self.testSequence.getName(),"testSequence")
+
+    def test_setName(self):
+        self.testSequence.setName("pogo")
+        self.assertEqual(self.testSequence.getName(),"pogo")
+
+    def test_getNumberOfMoves(self):
+        self.assertEqual(self.testSequence.getNumberofMoves(), 0)
+
+    def test_addMove(self):
+        self.testSequence.addMove(RoboAide.Move(self.testWindow.dictMot))
+        self.assertEqual(self.testSequence.getNumberofMoves(), 1)
+
+    def test_getMoves(self):
+        self.testSequence.addMove(RoboAide.Move(self.testWindow.dictMot))
+        self.testSequence.addMove(RoboAide.Move(self.testWindow.dictMot))
+        self.assertEqual(self.testSequence.getNumberofMoves(), 2)
+
+    def test_deleteMove(self):
+        move = RoboAide.Move(self.testWindow.dictMot)
+        self.testSequence.addMove(move)
+        self.testSequence.deleteMove(move)
+        self.assertEqual(self.testSequence.getNumberofMoves(), 0)
+
+class TestCreateSequenceWindow(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+        self.testWindow.comm = DummyComm()
+        self.testSequenceWindow = RoboAide.CreateSequenceWindow(self.testWindow.dictMot,
+                                                                self.testWindow.listOfSequencesHandler,
+                                                                RoboAide.Sequence(self.testWindow.dictMot))
+
+    def test_addMovetoSequence(self):
+
+        for counterMotors in range(len(self.testWindow.dictMot)):
+            self.testSequenceWindow.listOfSliders[counterMotors].setValue(40)
+
+        self.testSequenceWindow.addMovetoSequence()
+
+        self.assertEqual(self.testSequenceWindow.getSequence().getNumberofMoves(),1)
+
+
+    def test_updateSlidersPositions(self):
+        for motor in self.testWindow.dictMot:
+            self.testWindow.dictMot[motor].setGoalPosition(30)
+
+        self.testSequenceWindow.updateSlidersPositions()
+
+        for counterMotors in range(len(self.testWindow.dictMot)):
+            self.assertEqual(self.testSequenceWindow.listOfSliders[counterMotors].value(),30)
+
+    def test_deleteMove(self):
+        for counterMotors in range(len(self.testWindow.dictMot)):
+            self.testSequenceWindow.listOfSliders[counterMotors].setValue(40)
+
+        self.testSequenceWindow.addMovetoSequence()
+
+        self.assertEqual(self.testSequenceWindow.getSequence().getNumberofMoves(),1)
+
+        self.testSequenceWindow.deleteMove(self.testSequenceWindow.getListofMoveLabels().item(0))
+
+        self.assertEqual(self.testSequenceWindow.getSequence().getNumberofMoves(), 0)
+
+    def test_setName(self):
+        self.testSequenceWindow.setName("bob")
+        self.assertEqual(self.testSequenceWindow.getSequence().getName(), "bob")
+
+    def test_addSequenceToList(self):
+        row = self.testWindow.ui.listOfSequences.count()
+
+        for counterMotors in range(len(self.testWindow.dictMot)):
+            self.testSequenceWindow.listOfSliders[counterMotors].setValue(40)
+        self.testSequenceWindow.nameEntry.setText("bob")
+        self.testSequenceWindow.addMovetoSequence()
+
+        self.testSequenceWindow.addSequenceToList()
+
+        self.assertEqual(self.testWindow.ui.listOfSequences.count(), row+1)
+
+        foundSequenceInSaveFile = False
+        try:
+            with open('SaveSequence.json') as save:
+                savedListOfSequences = json.load(save)
+                for sequence in savedListOfSequences:
+                    if self.testSequenceWindow.getSequence().getName() in sequence:
+                        foundSequenceInSaveFile = True
+
+            self.assertTrue(foundSequenceInSaveFile)
+        except FileNotFoundError:
+            print("No file saved")
+
+        self.testWindow.ui.listOfSequences.setCurrentItem(self.testSequenceWindow.getSequence())
+
+        self.testWindow.listOfSequencesHandler.removeSelectedItem()
+
+        self.assertEqual(self.testWindow.ui.listOfSequences.count(), row)
 
 class TestMainWindow(unittest.TestCase):
     def setUp(self):

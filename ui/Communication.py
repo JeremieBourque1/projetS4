@@ -15,6 +15,9 @@ class MessageReception(QThread):
         self.firstMessage = True
 
     def run(self):
+        """
+        run thread
+        """
         print("Message Reception thread started")
         while self.shouldRun:
             message = self.mainWindow.comm.read(self.mainWindow.messageSize)  # TODO: Find out why an extra byte is received (only happens with openCr)
@@ -29,10 +32,17 @@ class MessageReception(QThread):
         print("done")
 
     def stop(self):
+        """
+        Method to stop and close the thread
+        """
         self.shouldRun = False
         print("Stopping Message Reception thread")
 
     def setMotorCurrentPosition(self, msg):
+        """
+        Method to set the current position of all motors based on the information in the received message
+        :param msg: received message
+        """
         for i in range(self.mainWindow.numberOfMotors):
             self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i+1])
         if self.firstMessage:
@@ -44,10 +54,10 @@ class MessageReception(QThread):
     def setDrawerState(self, msg):
         """
         Update drawer state (open/closed)
-        :return: None
+        :param msg: received message
         """
-        for drawer in self.mainWindow.drawersList:
-            drawer.setState(msg[i+9])
+        for i in range(len(self.mainWindow.drawersList)):
+            self.mainWindow.drawersList[i].setState(msg[i+8])
 
 
 class MessageTransmission(QThread):
@@ -62,6 +72,9 @@ class MessageTransmission(QThread):
         self.firstMessage = True
 
     def run(self):
+        """
+        run thread
+        """
         print("Message Transmission thread started")
         while self.shouldRun:
             self.msleep(500)
@@ -71,6 +84,9 @@ class MessageTransmission(QThread):
                 self.mainWindow.msgMu.unlock()
 
     def stop(self):
+        """
+        Method to stop and close the thread
+        """
         self.shouldRun = False
         print("Stopping Message Transmission thread")
 
@@ -91,7 +107,12 @@ def initSerialConnection(port):
         connected = False
     return ser, connected
 
+
 def scanAvailablePorts():
+    """
+    scan available serial ports and return the list
+    :return: list of available serial ports
+    """
     ports = serial.tools.list_ports.comports()
     ports_list = ['Select a communication port']
     ports_list.extend(ports)

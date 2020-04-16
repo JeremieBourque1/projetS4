@@ -1,6 +1,10 @@
 #include <Arduino.h>
 //#include "dynamixel.h"
 #include "axialMotor.h"
+// We used those links to modify encoder.cpp
+//https://github.com/ROBOTIS-GIT/OpenCM9.04/pull/30/files
+//http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
+#include "encoder/Encoder.cpp"
 
 // Declare global variables
 const int MESSAGE_SIZE = 19;
@@ -8,9 +12,9 @@ char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
-//Dynamixel mot1(id1, 28);
-//Dynamixel mot2(id2, 40);
-//Dynamixel mot3(id3, 20);
+//Dynamixel mot1(id1, 0.879); //28
+//Dynamixel mot2(id2, 0.879*2); //40
+//Dynamixel mot3(id3, 1); //20
 
 
 /**
@@ -91,7 +95,7 @@ bool slowItBOT = false;
 void loop() {
 
   long encPosition = test.enc->read();
-  
+
   test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
 
 
@@ -140,13 +144,20 @@ void loop() {
       }
 
 
-      // TODO: Call move motor functinons
-//      mot1.moveMotor(data.p1);
-//      mot2.moveMotor(data.p2);
-//      mot3.moveMotor(data.p3);
 
-//      dataPack outgoingMessage{(byte)'a', (int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (bool)data.shouldStop, (byte)'\0'};
-//      sendMessage(outgoingMessage);
+      dataPack outgoingMessage{(byte)'a',
+                               (int32_t)(mot1.getPosition()),
+                               (int32_t)(mot2.getPosition()),
+                               (int32_t)(mot3.getPosition()),
+                               0,
+                               0,
+                               0,
+                               (bool)data.shouldStop,
+                               (bool)data.drawer1,
+                               (bool)data.drawer2,
+                               (bool)data.drawer3,
+                               (byte)'\0'};
+      sendMessage(outgoingMessage);
     }
     else
     {
@@ -243,7 +254,7 @@ void startMotors()
 //  mot1.torque(true);
 //  mot2.torque(true);
 //  mot3.torque(true);
-} 
+}
 
 void trigShouldSlowDownPin1()
 {

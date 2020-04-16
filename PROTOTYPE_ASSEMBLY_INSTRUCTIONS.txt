@@ -1,0 +1,28 @@
+INSTRUCTIONS TO ASSEMBLE THE PROTOTYPE
+****
+In order to assemble the prototype, you must have the materials listed in the bill of materials.
+Every part is assigned to its number from the BOM.
+Use the CAD as additionnal information and guide to complete the assembly of the prototype.
+****
+
+1. Assemble the first segment of the arm with parts 1, 4, 6, 7, 2x 10, 11, 12, 13, 14, 4x 21, 4x 23, the lead screw from kit 2 and 2x linear bearing from kit 2.
+
+2. Assemble the second segment of the arm with parts 1, 4, 3x 6, 7, 8, 2x 10, 12, 13, 14, 8x 21 and 8x 23.
+ 
+3. Assemble the third segment of the arm with parts 1, 7, 8, 4x 21 and 4x 23.
+
+4. Assemble segment 2 and 3 of the arm using 4x part 20 and 4x part 23.
+
+5. Assemble segment 2/3 with the segment 1 using 4x part 20 and 4x part 23.
+
+6. Insert the leading screw in the lead screw part and the guiding shaft in the linear bearing. Those parts are in the kit no.2.
+
+7. Assemble the vertical support plate using the rest of the parts form kit 2 with parts 15, 3, 17, 16x 18 and 16x 19. 
+
+8. Assemble the alluminium base support on the wood plank using parts 16, 3x 5, 4x 9, 24x 22 and 24x 23.
+
+9. Assemble the robot arm to the base using 2x9, 4x 22 and 4x 23.
+
+GOOD LUCK!
+
+

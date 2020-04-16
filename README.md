@@ -2,29 +2,32 @@
 
 [![Build Status](https://travis-ci.com/JeremieBourque1/projetS4.svg?branch=master)](https://travis-ci.com/JeremieBourque1/projetS4)
 
+
 ## Description
-RoboAide is a project to improve a DIY robotic arm used for mobility assistance. This repository contains code for a GUI application as well as Arduino code for the control of the arm's motors. The application is made in Python using PySide2 and communicates the desired motor positions via USB serial communication with the Arduio/OpenCR board.
-*NOTE*: follow the instructions section before launching the application.
+RoboAide is a project to improve a DIY robotic arm used for mobility assistance. This repository contains code for a GUI application, Arduino code for the control of the arm's motors as well as CAD parts for a 3D printed shell for the arm segments and joints. The application is made in Python using PySide2 and communicates the desired motor positions via USB serial communication with the Arduio/OpenCR board.<br/>
+Due to the team's limitation in regards to access to the robotic arm, a smaller prototype version of the arm was built and it was with it that the software was written and tested on. However, the 3D printed shell was designed for the actual arm. In a future version, the software will be adapted for the real arm as well.
+
+![Image of arm prototype and GUI app](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/arm_and_gui.jpg)
 
 ## Overview of the application
 
 The application is written in Python and is designed to run on Windows but should also run on other platforms, although this was not tested extensively.
 The application contains three tabs: "Motor control", which is for moving the arm's motors individually in joint mode, "Sequences", which is for creating move sequences and executing them, and "Drawers", which is for opening and closing drawers.
+*NOTE*: follow the instructions section before launching the application.
 
 ### Motor control
-![Image of the motor control tab](https://jeremiebourque1.github.com/images/ui_motorControl)
+![Image of the motor control tab](https://github.com/JeremieBourque1/projetS4/blob/master/images/ui_motorControl.jpg)<br/>
 To start the connection, select the appropriate communication port in the drop-down menu. Once connected, moving the sliders will move the motors.
 
 ### Sequences
-![Image of the sequences tab](https://jeremiebourque1.github.com/images/ui_seq)
-Here, you can see the list of user-created sequences. To execute a sequence, double click the sequence.
-![Image of the new sequence window](https://jeremiebourque1.github.com/images/ui_newSeq)
+![Image of the sequences tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_seq.jpg)<br/>
+Here, you can see the list of user-created sequences. To execute a sequence, double click the sequence.<br/><br/>
+![Image of the new sequence window](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_newSeq.jpg)<br/>
 To create a new sequence, click the "Create new sequence" button, which will open this window. You can move the sliders to the desired position, then click "Save move" and create the next move. Double clicking a saved move will move the arm to that position. When done, click "ok".
 
 ### Drawers
-![Image of the drawers tab](https://jeremiebourque1.github.com/images/ui_drawers)
+![Image of the drawers tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_drawers.jpg)<br/>
 This tab makes it possible to open and close the drawers. Note that this feature is not yet implemented in the controller, so the buttons currently do nothing. The feature will be implemented in a future version.
-
 
 ## Hardware Requirements
 * 1x PC running Windows (may also run on other platforms, but hasn't been testes)
@@ -33,15 +36,17 @@ This tab makes it possible to open and close the drawers. Note that this feature
 * 2x Twidec NJK-5002J inductive proximity sensor
 * 1x L298N DC motor drive
 * 1x Cytron 12v DC motor
+* Robot arm prototype (see hardware documentation for more information)
 
 ## Software requirements
 
 ### UI Dependencies
 * Python 3.7 or later (https://www.python.org/downloads/)
+* pip (https://www.liquidweb.com/kb/install-pip-windows/)
 * PySide2 
 * PySerial
 
-The necessary Pyton libraries can be installed with `pip install -r requirements.txt`
+The necessary Python libraries can be installed with `pip install -r requirements.txt`
 
 ### Controller dependencies
 * Arduino IDE (https://www.arduino.cc/en/main/software)
@@ -61,11 +66,17 @@ All software documentation can be viewed [here](https://jeremiebourque1.github.i
 
 
 ## Hardware documentation
+### Robotic arm prototype
+The bill of materials for the robot arm prototype can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/BOM_proto.xlsx?raw=true)
+### Robotic arm shell
+Everything concerning the arm shell can be found [here](https://github.com/JeremieBourque1/projetS4/tree/master/Arm%20Shell)
+### Vertical axis
 * DC driver L298N documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/DC motor drive)
 * Twidec NJK-5002J Inductive limit switch documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Limit switch)
 * Cytron 12v DC motor documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Cytron DC motor)
 * OpenCR documentation can be viewed [here] (https://jeremiebourque1.github.io/projetS4/electronic/OpenCR)
 For wiring images using arduino mega2560 : ![Image of the wiring](https://jeremiebourque1.github.com/images/arduino montage)
+
 
 ## Unit tests
 The application is tested using the unittest python module. To run the tests, open a command prompt, change the directory to the project’s directory and run this command: `python -m unittest discover`

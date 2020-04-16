@@ -5,19 +5,24 @@
 #
 # Date created: 22-01-2020
 
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__))) # import error fix
+
 
 from PySide2.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QMenu, QListWidgetItem,\
     QDialog, QDialogButtonBox, QLabel, QPushButton, QSlider, QListWidget, QMessageBox
 from PySide2.QtGui import QIcon, QBrush
 from PySide2.QtCore import QRect, Qt, QMutex, QThread, Signal
 from PySide2.QtUiTools import QUiLoader
-from ui.Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
-from ui.Drawer import Drawer
+from Communication import MessageReception, MessageTransmission, initSerialConnection, scanAvailablePorts
+from Drawer import Drawer
 from collections import deque
-import sys
+
 import warnings
 import struct
-import os
+
 import json
 import time
 
@@ -47,10 +52,19 @@ class playSequence(QThread):
         :param mainWindow: the main window of the UI
         """
         super(playSequence, self).__init__()
+        ## The moves of the sequence containing the different positions to reach
         self.__moves=moves
+        ## The motors of the robot
         self.__motors=motors
+        ## The handler of the different sequences
         self.__listOfSequencesHandler = listOfSequencesHandler
+        ## The main window of the UI
         self.__mainWindow = mainWindow
+
+        # Make sure the thread close properly even when the app is closed
+        self.__mainWindow.app.aboutToQuit.connect(self.close)
+
+        # connect a custom function to handle the different events when the thread is closed
         self.finished.connect(self.stop)
 
     def run(self):
@@ -70,9 +84,20 @@ class playSequence(QThread):
 
 
     def stop(self):
+        """
+        Handles the different events when the thread is closed
+        :return: None
+        """
         self.__listOfSequencesHandler.robotInMotionMessage.accept()
         self.__listOfSequencesHandler.enableUi()
         self.__mainWindow.shouldStop = False
+
+    def close(self):
+        """
+        To get out of the while loop
+        :return: None
+        """
+        self.__mainWindow.shouldStop = True
 
 
 def loadSequences(listOfSequenceHandler,motors):
@@ -229,7 +254,7 @@ class CreateSequenceWindow(QDialog):
     """
     Window for creating a new sequence
     """
-    def __init__(self, motors={}, listOfSequenceHandler=None, sequence = None, modifySequence = False):
+    def __init__(self, motors={}, listOfSequenceHandler = None, sequence = None, modifySequence = False):
         """
         Initializtion of the window for creating a new sequence
         :param motors: The dictionary of all the motors
@@ -247,15 +272,14 @@ class CreateSequenceWindow(QDialog):
         ## The dictionary of all the motors
         self.__motors = motors
         ## The new sequence
-        #self.__sequence = Sequence(motors)
         self.__sequence = sequence
         ## A dictionary of the positions of the new sequence
         self.__wantedPositions = {}
         ## The layout of the create sequence window
         self.__layout = QVBoxLayout(self)
         ## The widget for the name of the sequenc
-        self.__nameEntry = QLineEdit()
-        self.__nameEntry.setText(self.__sequence.getName())
+        self.nameEntry = QLineEdit()
+        self.nameEntry.setText(self.__sequence.getName())
         ## The label for the widget in which the name of the sequence is written
         self.__nameLabel = QLabel("Sequence Name")
         ## The list of the different moves that forms the sequence
@@ -275,7 +299,6 @@ class CreateSequenceWindow(QDialog):
 
         # Put the sliders of the create sequence window in a list
         ## List of sliders in the create sequence window
-        # TODO: put the following in a loop
         self.listOfSliders = []
         dictOfSlider = dict()
 
@@ -284,7 +307,6 @@ class CreateSequenceWindow(QDialog):
             dictOfSlider[motor].setMaximum(4095)
             dictOfSlider[motor].setValue(self.__motors[motor].getCurrentPosition())
             dictOfSlider[motor].sliderMoved.connect(self.__motors[motor].setGoalPosition)
-            print(self.__motors[motor].getName())
             self.listOfSliders.append(dictOfSlider[motor])
 
         ## Message to make the user put a name to the sequence
@@ -320,7 +342,7 @@ class CreateSequenceWindow(QDialog):
         self.buttonBox = QDialogButtonBox()
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
         # If ok pressed add the sequence to the list
-        self.buttonBox.accepted.connect(lambda: self.addItem(self.__modifySequence))
+        self.buttonBox.accepted.connect(lambda: self.addSequenceToList(self.__modifySequence))
         # If cancel pressed close the create sequence window
         self.buttonBox.rejected.connect(self.__warningMessage.exec)
 
@@ -334,7 +356,7 @@ class CreateSequenceWindow(QDialog):
 
         # Build the vertical layout with the different widgets
         self.__layout.addWidget(self.__nameLabel)
-        self.__layout.addWidget(self.__nameEntry)
+        self.__layout.addWidget(self.nameEntry)
         self.__layout.addWidget(self.__listOfMoveLabels)
         for motorNumber in range(len(self.__motors)):
             self.__layout.addWidget(self.__motorLabels[motorNumber])
@@ -354,33 +376,47 @@ class CreateSequenceWindow(QDialog):
         """
         self.__sequence.setName(name)
 
-    def addItem(self, modifySequence = False):
+    def getSequence(self):
+        """
+        Accessor of the sequence (for tests)
+        :return: the sequence
+        """
+        return self.__sequence
+
+    def getListofMoveLabels(self):
+        """
+        Accessor of the list of move labels (for tests)
+        :return: the list of move labels
+        """
+        return self.__listOfMoveLabels
+
+    def addSequenceToList(self, modifySequence = False):
         """
         Add the sequence to the list of sequence
         :param modifySequence: bool, if true there's a selected sequence that needs to be modified if false
         it's a new sequence
         :return: No return
         """
-        # TODO: move this method to the list of sequence handler
+        # TODO: look to move this method to the list of sequence handler
         # TODO: don't let the user enter a sequence that has the same name as an old one
-        if self.__nameEntry.text() != "":
+        self.setName(self.nameEntry.text())
+        if self.__sequence.getName() != "":
             # Load previously saved sequences
             try:
                 with open('SaveSequence.json') as save:
                     savedListOfSequences = json.load(save)
             except FileNotFoundError:
-                # print("Save file not found")
                 savedListOfSequences = []
+
             if modifySequence:
                 # Get the item that needs to be modified
-                selectedSequence = self.__listOfSequenceHandler.getSelectedItems()
+                # selectedSequence = self.__listOfSequenceHandler.getSelectedItems()
                 # Find the selected sequence in the list of saved ones
                 for sequence in savedListOfSequences:
-                    if selectedSequence[0].getName() in sequence:
+                    if self.__sequence.getName() in sequence:
                         indexOfTheSequence = savedListOfSequences.index(sequence)
                         # remove the unmodified sequence to insert the modified sequence
                         savedListOfSequences.remove(sequence)
-                        self.setName(self.__nameEntry.text())
                         self.__listOfSequenceHandler.addItem(self.__sequence)
                         # Make the sequence json seriable
                         newSequence = dict()
@@ -398,7 +434,6 @@ class CreateSequenceWindow(QDialog):
 
                         self.accept()
             else:
-                self.setName(self.__nameEntry.text())
                 self.__listOfSequenceHandler.addItem(self.__sequence)
                 # Make the sequence json seriable
                 newSequence = dict()
@@ -539,7 +574,12 @@ class CreateSequenceWindow(QDialog):
         :param label: label of the move
         :return: No return
         """
-        # TODO: set the sliders to the value of the motors in the move
+        # Check if there's a move in modifying state
+        for row in range(self.__listOfMoveLabels.count()):
+            if not self.__listOfMoveLabels.item(row).getMove().isNew:
+                self.__listOfMoveLabels.item(row).getMove().isNew = True
+                self.__listOfMoveLabels.item(row).setBackground(QBrush(Qt.white))
+
         moveToModify = label.getMove()
         moveToModify.isNew = False
         label.setBackground(QBrush(Qt.darkCyan))
@@ -831,10 +871,10 @@ class MainWindow(QMainWindow):
         self.updateSliderPositions()
 
         ## ListOfSequencesHandler object
-        self.__listOfSenquenceHandler = ListOfSequencesHandler(self, self.dictMot)
+        self.listOfSequencesHandler = ListOfSequencesHandler(self, self.dictMot)
 
         # load the last save
-        loadSequences(self.__listOfSenquenceHandler,self.dictMot)
+        loadSequences(self.listOfSequencesHandler,self.dictMot)
 
         # Connect the slider signals
         self.ui.slider_mot1.sliderMoved.connect(
@@ -980,6 +1020,9 @@ class MainWindow(QMainWindow):
         self.sendMessage('c')
 
     def stopMotors(self):
+        """
+        Signal all motors to stop and empty message deque
+        """
         self.shouldStop = True
         self.msgDeque.clear()
         self.sendMessage('a')
@@ -989,7 +1032,6 @@ def makeStruct():
     """
     Make the struct and return it along with it's size in bytes
     :return: struct object, byte size of the struct
-
     """
     ## Define struct format for communicating messages
     # c: mode
