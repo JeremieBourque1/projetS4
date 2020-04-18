@@ -7,20 +7,21 @@ class axialMotor
   axialMotor();
   ~axialMotor();
   bool shouldSlowDown(bool slowItTOP , bool slowItBOT);
-  int runAxialCalibration(int cas,int newHomePosition);
+  int runAxialCalibration(int cas);
   void setMotorState(int stateValue);
   void setEnableDrive(bool driveValue);
-  void runIt(long encPosition,bool* slowItTOP, bool* slowItBOT, int requiredPosition, bool* buttonCalibration);
+  void runIt(bool* slowItTOP, bool* slowItBOT, uint16_t requiredPosition, bool* buttonCalibration);
   int getMotorState();
   int getDriveState();
   int getProximitySensorPin(int sensorNumber);
   int getProximitySensorValue(int sensorNumber);
   int getMotorPin(int directionNumber);
   int getDrivePin();
-  bool goToPosition(int encPosition,int requiredPosition);
-  int positionToClicks(int lengthCm);
+  bool goToPosition(uint16_t requiredPosition);
+  int positionToClicks(uint16_t lengthCm);
   void modifyCalibrationCase(int newCaseValue);
   int getCalibrationCase();
+  uint16_t getPosition(int calibrationCase);
   Encoder* enc;
   
   private:
@@ -32,7 +33,8 @@ class axialMotor
   int proximitySensor2Pin; //Connected pin for sensor #2s
   long homePosition; //home position of encoder
   long oldPosition; //starting encoder variable
-  long calibrationCase;
-  long totalClicksOnRobot;
-  int totalIncrementOfSlider;
+  int calibrationCase;
+  float totalClicksOnRobot;
+  float totalIncrementOfSlider;
+  int acceptedTol; //TODO: match tolerance with RPM and increments.
 };

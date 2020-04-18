@@ -90,21 +90,23 @@ void setup() {
   test.setMotorState(-1);
 }
 bool buttonCalibration = false;
-int requiredPosition = 40; //from 0 (TOP) to 4095 (BOT)
+int requiredPosition = 1250; //from 0 (TOP) to 4095 (BOT)
 bool slowItTOP = false;
 bool slowItBOT = false;
+uint16_t goalPositionVerticalAxis = 0;
 
 void loop() {
-
-  long encPosition = test.enc->read();
-  //test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
-
-
+  //test.runIt(&slowItTOP,&slowItBOT,requiredPosition,&buttonCalibration);
+  //Serial.print("RETOUR DE GETPOSITION: ");
+  //Serial.println(test.getPosition(test.getCalibrationCase()));
+  //test.getPosition(encPosition,test.getCalibrationCase());
+  test.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);//data.buttonCalibration
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
+    
     // Read data
     dataPack data;
-    test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,&buttonCalibration);//data.buttonCalibration
+    
     if (readDataToStruct(&data))
     {
       // Debug
@@ -121,6 +123,7 @@ void loop() {
       {
         if(data.mode == 'a')
         {
+          goalPositionVerticalAxis = data.p4;
           //moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
           setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
         }
@@ -147,7 +150,7 @@ void loop() {
       dataPack outgoingMessage{1,
                                2,
                                3,
-                               (uint16_t)encPosition, //(uint16_t)encPosition
+                               test.getPosition(test.getCalibrationCase()), //test.getPosition(test.getCalibrationCase())
                                5,
                                6,
                                (bool) data.shouldStop , //data.shouldStop

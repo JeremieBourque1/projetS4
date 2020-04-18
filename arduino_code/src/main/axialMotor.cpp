@@ -27,8 +27,9 @@ axialMotor::axialMotor(int enAPinValue, int motorInitialState,int pinCWOutputVal
   homePosition = 0;
   oldPosition = -999;
   calibrationCase = -1;
-  totalClicksOnRobot = 5000; //This value needs to be chanded by the one measured at client
-  totalIncrementOfSlider = 4095;
+  totalClicksOnRobot = 10000.0; //This value needs to be chanded by the one measured at client
+  totalIncrementOfSlider = 4095.0;
+  acceptedTol = 25;
 
 }
 
@@ -46,8 +47,9 @@ axialMotor::axialMotor()
   homePosition = 0;
   oldPosition = -999;
   calibrationCase = -1;
-  totalClicksOnRobot = 5000; //This value needs to be chanded by the one measured at client
-  totalIncrementOfSlider = 4095;
+  totalClicksOnRobot = 10000.0; //This value needs to be chanded by the one measured at client
+  totalIncrementOfSlider = 4095.0;
+  acceptedTol = 25;
 }
 
 axialMotor::~axialMotor()
@@ -103,7 +105,7 @@ bool axialMotor::shouldSlowDown(bool slowItTOP,bool slowItBOT)
   * \param newHomePosition : Int value of the encoder given to update the homePosition variable.
   * \return int : Returns the value of the next case to be executed. Example, if case 0 is run, the return will be 1. If the case 1 is run ,the return will be -1;
   */
-int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
+int axialMotor::runAxialCalibration(int newCase)
 {
     if (newCase == 0)
     {
@@ -114,7 +116,7 @@ int axialMotor::runAxialCalibration(int newCase,int newHomePosition)
     else if (newCase == 1)
     {  
       setMotorState(-1);
-      homePosition = newHomePosition;
+      homePosition = oldPosition;
       //Serial.print("This is home: ");
       //Serial.println(homePosition);
       return -1; 
@@ -256,27 +258,30 @@ void axialMotor::setEnableDrive(bool driveValue)
  *  \param slowItBOT : Boolean pointer to the stop value of the bottom interrupt sequence.
  *  \param requiredPosition : Int value representing the wanted position.
  */
-void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int requiredPosition, bool* buttonCalibration)
-{
+void  axialMotor::runIt(bool* slowItTOP, bool* slowItBOT,uint16_t requiredPosition, bool* buttonCalibration)
+{ 
+ long encPosition = enc->read();
   if (encPosition != oldPosition) 
   {
-    //Serial.println(encPosition);
-    oldPosition = encPosition;
+    if (abs(encPosition-oldPosition) > acceptedTol)
+    {
+      oldPosition = encPosition;
+    }
   }
   if (*buttonCalibration == true)
   {
     calibrationCase = 0;
-    *buttonCalibration == false;
+    *buttonCalibration = false;
   }
   if (calibrationCase == 0)
   {
     //Serial.println("Calibration case = 0");
-    calibrationCase = runAxialCalibration(calibrationCase,encPosition);
+    calibrationCase = runAxialCalibration(calibrationCase);
   }
   if (calibrationCase == 1 && *slowItTOP == true)
   {
     //Serial.println("Calibration case = 1");
-    calibrationCase = runAxialCalibration(calibrationCase,encPosition);
+    calibrationCase = runAxialCalibration(calibrationCase);
   }
 
   if (digitalRead(proximitySensor1Pin) == 1)
@@ -294,9 +299,9 @@ void  axialMotor::runIt(long encPosition,bool* slowItTOP, bool* slowItBOT,int re
   if (calibrationCase == -1)
   {
     //Serial.println("calibration is done so runIt calls goToPosition");
-    goToPosition(encPosition,requiredPosition);
+    goToPosition(requiredPosition);
   }
-
+   
 }
 
 /** \brief Gives the status of the drive pin on the dc drive. 
@@ -320,29 +325,22 @@ int axialMotor::getDrivePin()
  *  \param requiredPosition : Int value of the wanted position of the arm.
  *  \return bool : Returns true when done.
  */
-bool axialMotor::goToPosition(int encPosition,int requiredPosition)
-{
-  int acceptedTol = 25;
+bool axialMotor::goToPosition(uint16_t requiredPosition)
+{ 
   int positionInClicks = positionToClicks(requiredPosition);
-  int tolerance = abs(positionInClicks - encPosition);
+  int tolerance = abs(positionInClicks - oldPosition);
+  //Serial.print("Tolérance: ");
   //Serial.println(tolerance);
   if (tolerance > acceptedTol) //if tolerance not reached
   {
-    //Serial.println(positionInClicks - encPosition);
-    if (positionInClicks - encPosition  < 0)
+    if (positionInClicks - oldPosition  < 0)
     { 
-     /* Serial.print("position actuelle: ");
-      Serial.println(encPosition );
-      Serial.print("position Requise: ");
-      Serial.println(positionInClicks);
-      Serial.print("Différence: ");
-      Serial.println(encPosition-positionInClicks);*/
       setMotorState(1);
       //Serial.println("MONTE");
       return true;
     }
     
-    else if (positionInClicks - encPosition > 0)
+    else if (positionInClicks - oldPosition > 0)
     {
       //Serial.println("DESCEND");
       setMotorState(0);
@@ -361,10 +359,10 @@ bool axialMotor::goToPosition(int encPosition,int requiredPosition)
  *  \param percentageOfTravel : int value corresponding to the percentage (ex: 10, 25, etc.) of the rail you want to be on.
  *  \return int : Value in clicks of the input in percentage.
  */
-int axialMotor::positionToClicks(int requiredPosition)
+int axialMotor::positionToClicks(uint16_t requiredPosition)
 {
 
-  double percent = (double)requiredPosition/totalIncrementOfSlider; 
+  float percent = (float)requiredPosition/totalIncrementOfSlider; 
   //Serial.println(percent);
   //Serial.println(homePosition + (percent * totalClicksOnRobot));
   return homePosition + (percent * totalClicksOnRobot) ;
@@ -384,4 +382,27 @@ void  axialMotor::modifyCalibrationCase(int newCaseValue)
 int  axialMotor::getCalibrationCase()
 {
   return calibrationCase;
+}
+
+uint16_t axialMotor::getPosition(int calibrationCase)
+{
+  //Serial.println("calibrationCase :");
+  //Serial.println(calibrationCase);
+ if (calibrationCase == 0 || calibrationCase == 1 || calibrationCase == -2)
+ {
+    return 2;
+ }
+ 
+ else
+ {
+    
+   float sentPosition = ((oldPosition - homePosition)/totalClicksOnRobot)*totalIncrementOfSlider;
+   
+   if (sentPosition < 0.0)
+   {
+      return 3;
+   }
+    
+   return sentPosition;
+ }
 }
