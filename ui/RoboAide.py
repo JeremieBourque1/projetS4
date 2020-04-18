@@ -61,7 +61,7 @@ class playSequence(QThread):
         ## The main window of the UI
         self.__mainWindow = mainWindow
 
-        # Make sure the thread close properly even when the app is closed
+        # Make sure the thread close properly even if the app is closed
         self.__mainWindow.app.aboutToQuit.connect(self.close)
 
         # connect a custom function to handle the different events when the thread is closed
@@ -156,9 +156,6 @@ class ListOfSequencesHandler:
         self.robotInMotionMessage.addButton(QMessageBox.Abort)
         self.robotInMotionMessage.rejected.connect(self.__mainWindow.stopMotors)
         self.robotInMotionMessage.rejected.connect(self.enableUi)
-        # self.robotInMotionMessage.setStandardButtons(QMessageBox.Ok)
-        # Renable the create sequence window and closes the message
-        # self.robotInMotionMessage.accepted.connect(self.enableUi())
 
         # Create a new window when the create sequence button is clicked
         self.__createSequenceButton.clicked.connect(self.createWindow)
@@ -169,7 +166,7 @@ class ListOfSequencesHandler:
     def addItem(self, item):
         """
         Add an item to the list of sequence
-        :param item: The item to add
+        :param item: The QListWidgetItem sequence to add
         :return: No return
         """
         self.__listOfSequences.addItem(item)
@@ -1044,6 +1041,7 @@ def makeStruct():
     # ?: stop indicator for all motors
     # 3?: open/close drawers (True = open, False = close)
     # c: end-of-message character
+    #TODO: try adding little endian (<) to struct definition
     structDefinition = 'c6H?3?c'
     s = struct.Struct(structDefinition)
     return s, struct.calcsize(structDefinition)

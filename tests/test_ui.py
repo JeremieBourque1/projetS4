@@ -165,6 +165,39 @@ class TestCreateSequenceWindow(unittest.TestCase):
 
         self.assertEqual(self.testWindow.ui.listOfSequences.count(), row)
 
+class TestListOfSequencesHandler(unittest.TestCase):
+    def setUp(self):
+        self.testWindow = RoboAide.MainWindow(app)
+        self.testWindow.serialConnected = True
+        self.testWindow.comm = DummyComm()
+        self.testListofSequencesHandler = RoboAide.ListOfSequencesHandler(self.testWindow,
+                                                                          self.testWindow.dictMot)
+        self.testSequence = RoboAide.Sequence(self.testWindow.dictMot, "testSequence")
+        self.testMove = RoboAide.Move(self.testWindow.dictMot)
+        for motor in self.testWindow.dictMot:
+           self.testMove.setMotorPosition(motor,10)
+        self.testSequence.addMove(self.testMove)
+
+    def test_addItem(self):
+        row = self.testWindow.ui.listOfSequences.count()
+        self.testListofSequencesHandler.addItem(self.testSequence)
+        self.assertEqual(self.testWindow.ui.listOfSequences.count(), row + 1)
+
+
+    def test_playSequence(self):
+        row = self.testWindow.ui.listOfSequences.count()
+        self.testListofSequencesHandler.addItem(self.testSequence)
+        self.testWindow.ui.listOfSequences.setCurrentItem(self.testWindow.ui.listOfSequences.item(row))
+        self.assertTrue(self.testWindow.ui.listOfSequences.item(row).isSelected())
+        self.testListofSequencesHandler.playSequence()
+        time.sleep(1)
+        self.testWindow.shouldStop = True
+        for motor in self.testWindow.dictMot:
+            self.assertEqual(self.testWindow.dictMot[motor].getGoalPosition(),10)
+
+
+
+
 class TestMainWindow(unittest.TestCase):
     def setUp(self):
         self.testWindow = RoboAide.MainWindow(app)

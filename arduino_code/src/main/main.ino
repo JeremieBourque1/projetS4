@@ -132,9 +132,9 @@ void loop() {
 
 
       dataPack outgoingMessage{(byte)'a', 
-                               (int32_t)(mot1.getPosition()), 
-                               (int32_t)(mot2.getPosition()), 
-                               (int32_t)(mot3.getPosition()), 
+                               (int16_t)(mot1.getPosition()), 
+                               (int16_t)(mot2.getPosition()), 
+                               (int16_t)(mot3.getPosition()), 
                                0, 
                                0, 
                                0, 
