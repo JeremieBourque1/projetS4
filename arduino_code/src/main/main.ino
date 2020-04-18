@@ -6,11 +6,14 @@
 //http://emanual.robotis.com/docs/en/parts/controller/opencr10/#layoutpin-map
 
 // Declare global variables
-const int MESSAGE_SIZE = 19;
+const int MESSAGE_SIZE = 18;
 char endOfMessageChar = '\0';
 const int id3 = 221;
 const int id1 = 222;
 const int id2 = 223;
+#define START_CALIBRATION 0
+#define NO_CALIBRATION -2
+
 //Dynamixel mot1(id1, 0.879); //28
 //Dynamixel mot2(id2, 0.879*2); //40
 //Dynamixel mot3(id3, 1); //20
@@ -21,8 +24,6 @@ const int id2 = 223;
    \brief A structure containing message data
 */
 struct dataPack {
-  //! Operation mode
-  char mode;
   //! Motor 1 position
   uint16_t p1;
   //! Motor 2 position
@@ -43,9 +44,10 @@ struct dataPack {
   bool drawer2;
   //! Drawer 3 state
   bool drawer3;
+  //! Operation mode
+  char mode;
   //! End of message character
   char last;
-  char last2;
 };
 
 // Function prototypes
@@ -54,7 +56,7 @@ void readMessage(char *message);
 void sendMessage(dataPack message);
 void moveAbsolute(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
 void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_t p5, uint16_t p6);
-void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3);
+void setDrawerGoalState(char drawer1, char drawer2, char drawer3);
 void stopMotors();
 void startMotors();
 
@@ -84,18 +86,17 @@ void setup() {
   pinMode(38,OUTPUT); //power for one of the sensor
   digitalWrite(38,HIGH); //power for one of the sensor
   test.setEnableDrive(true);
-  test.modifyCalibrationCase(0);
+  test.modifyCalibrationCase(NO_CALIBRATION); //START_CALIBRATION NO_CALIBRATION
   test.setMotorState(-1);
 }
 bool buttonCalibration = false;
-int requiredPosition = 10000;
+int requiredPosition = 40; //from 0 (TOP) to 4095 (BOT)
 bool slowItTOP = false;
 bool slowItBOT = false;
 
 void loop() {
 
   long encPosition = test.enc->read();
-
   //test.runIt(encPosition,&slowItTOP,&slowItBOT,requiredPosition,buttonCalibration);
 
 
@@ -103,7 +104,7 @@ void loop() {
   {
     // Read data
     dataPack data;
-    test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,false);//data.buttonCalibration
+    test.runIt(encPosition,&slowItTOP,&slowItBOT,data.p4,&buttonCalibration);//data.buttonCalibration
     if (readDataToStruct(&data))
     {
       // Debug
@@ -120,7 +121,7 @@ void loop() {
       {
         if(data.mode == 'a')
         {
-          moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
+          //moveAbsolute(data.p1, data.p2, data.p3, data.p4, data.p5, data.p6);
           setDrawerGoalState(data.drawer1, data.drawer2, data.drawer3);
         }
         else if(data.mode == 'i')
@@ -134,7 +135,7 @@ void loop() {
         }
         else if(data.mode == 'c')
         {
-          //TODO: connect to calibration function
+          buttonCalibration = true;
         }
       }
       else
@@ -143,18 +144,17 @@ void loop() {
         startMotors();
       }
                                
-      dataPack outgoingMessage{(byte)'a',
-                               0,
-                               0,
-                               0,
+      dataPack outgoingMessage{1,
+                               2,
+                               3,
                                (uint16_t)encPosition, //(uint16_t)encPosition
-                               0,
-                               0,
-                               (bool)data.shouldStop,
-                               (bool)data.drawer1,
-                               (bool)data.drawer2,
-                               (bool)data.drawer3,
-                               (char)'\0',
+                               5,
+                               6,
+                               (bool) data.shouldStop , //data.shouldStop
+                               (bool) data.drawer1, //data.drawer1
+                               (bool) data.drawer2, //data.drawer2
+                               (bool) data.drawer3, //data.drawer3
+                               (char)data.mode,
                                (char)'\0'};
       sendMessage(outgoingMessage);
     }
@@ -201,7 +201,7 @@ bool readDataToStruct(dataPack *data)
     buf[i] = Serial.read();
     i++;
   }
-  memcpy(data, buf, sizeof(*data)-1);
+  memcpy(data, buf, sizeof(*data));
   if (data->last != endOfMessageChar) // if the last character is not the end-of-message character, message is corrupted
     return false;
 
@@ -236,7 +236,7 @@ void moveIncremental(uint16_t p1, uint16_t p2, uint16_t p3, uint16_t p4, uint16_
   //TODO
 }
 
-void setDrawerGoalState(bool drawer1, bool drawer2, bool drawer3)
+void setDrawerGoalState(char drawer1, char drawer2, char drawer3)
 {
   //TODO
 }
@@ -257,19 +257,23 @@ void startMotors()
 
 void trigShouldSlowDownPin1()
 {
+  //Serial.println("TOP MAX");
     slowItTOP = true;
-    if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
+    if(test.shouldSlowDown(slowItTOP,slowItBOT) == true && test.getCalibrationCase() != 0)
     {
+      //Serial.println("STOP MOTOR");
       test.setMotorState(-1);
     }
 }
 
 void trigShouldSlowDownPin2()
 {
+  //Serial.println("BOTTOM MAX");
   slowItBOT = true;
 
   if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
   {
+    //Serial.println("STOP MOTOR");
     test.setMotorState(-1);
   }
 }

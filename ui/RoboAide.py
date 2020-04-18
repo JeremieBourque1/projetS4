@@ -990,8 +990,7 @@ class MainWindow(QMainWindow):
         :return: None
         """
         if self.serialConnected:
-            values = (mode.encode(),
-                      self.dictMot["motor1"].getGoalPosition(),
+            values = (self.dictMot["motor1"].getGoalPosition(),
                       self.dictMot["motor2"].getGoalPosition(),
                       self.dictMot["motor3"].getGoalPosition(),
                       self.dictMot["motor4"].getGoalPosition(),
@@ -1001,10 +1000,12 @@ class MainWindow(QMainWindow):
                       self.drawersList[0].getState(),
                       self.drawersList[1].getState(),
                       self.drawersList[2].getState(),
+                      mode.encode(),
                       b'\0')
             print("Outgoing: ", end='')
             print(values)
             packed_data = self.s.pack(*values)
+            print(packed_data)
             self.msgMu.lock()
             self.msgDeque.append(packed_data)
             self.msgMu.unlock()
@@ -1044,7 +1045,7 @@ def makeStruct():
     # ?: stop indicator for all motors
     # 3?: open/close drawers (True = open, False = close)
     # c: end-of-message character
-    structDefinition = '<c6H?3?c'
+    structDefinition = '<6H4?2c'
     s = struct.Struct(structDefinition)
     return s, struct.calcsize(structDefinition)
 

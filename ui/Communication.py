@@ -26,6 +26,7 @@ class MessageReception(QThread):
                 print("message received")
                 unpacked_msg = self.mainWindow.s.unpack(message)  # Unpack message
                 print(str(self.counter) + ": ", end='')
+                print(message)
                 print(unpacked_msg)
                 self.counter += 1
                 self.setMotorCurrentPosition(unpacked_msg)
@@ -45,12 +46,13 @@ class MessageReception(QThread):
         :param msg: received message
         """
         for i in range(self.mainWindow.numberOfMotors):
-            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i+1])
+            self.mainWindow.dictMot["motor" + str(i+1)].setCurrentPosition(msg[i])
         if self.firstMessage:
             for i in range(self.mainWindow.numberOfMotors):
-                self.mainWindow.dictMot["motor" + str(i + 1)].setGoalPosition(msg[i + 1])
+                self.mainWindow.dictMot["motor" + str(i + 1)].setGoalPosition(msg[i])
             self.mainWindow.updateSliderPositions()
             self.firstMessage = False
+
 
     def setDrawerState(self, msg):
         """
@@ -58,7 +60,7 @@ class MessageReception(QThread):
         :param msg: received message
         """
         for i in range(len(self.mainWindow.drawersList)):
-            self.mainWindow.drawersList[i].setState(msg[i+8])
+            self.mainWindow.drawersList[i].setState(msg[i+7])
 
 
 class MessageTransmission(QThread):
