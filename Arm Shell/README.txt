@@ -3,7 +3,7 @@
 ## Description
 
 The arm is divided in two parts. The first part of the arm is the first joint starting from the wall and the second is starting at the elbow joint to the tool.
-For each part there is a different shell and each shell will be printed in two pieces the will need to be assembled to the arm. 
+For each part there is a different shell and each shell will be printed in two pieces that will need to be assembled to the arm. 
 
 ## Assembling
 
