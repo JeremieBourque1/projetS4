@@ -33,8 +33,8 @@ class axialMotor
   int proximitySensor2Pin; //Connected pin for sensor #2s
   long homePosition; //home position of encoder
   long oldPosition; //starting encoder variable
-  int calibrationCase;
-  float totalClicksOnRobot;
-  float totalIncrementOfSlider;
+  int calibrationCase; //gives the calibration step for motor calibration
+  float totalClicksOnRobot; //Total clicks of the robot's power screw
+  float totalIncrementOfSlider; // Number of incremenet of the slider.
   int acceptedTol; //TODO: match tolerance with RPM and increments.
 };
