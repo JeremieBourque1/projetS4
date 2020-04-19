@@ -117,8 +117,6 @@ int axialMotor::runAxialCalibration(int newCase)
     {  
       setMotorState(-1);
       homePosition = oldPosition;
-      //Serial.print("This is home: ");
-      //Serial.println(homePosition);
       return -1; 
     }
     
@@ -163,8 +161,8 @@ void axialMotor::setMotorState(int stateValue)
   else if (motorState == -1)
      {
        //Serial.println("Setting motor to: -1 (2)");
-       analogWrite(pinCCWOutput,1); //si erreur, mettre les deux à zéro
-       analogWrite(pinCWOutput,1);
+       analogWrite(pinCCWOutput,255); //si erreur, mettre les deux à zéro
+       analogWrite(pinCWOutput,255);
      }
 }
 
@@ -263,10 +261,11 @@ void  axialMotor::runIt(bool* slowItTOP, bool* slowItBOT,uint16_t requiredPositi
  long encPosition = enc->read();
   if (encPosition != oldPosition) 
   {
-    if (abs(encPosition-oldPosition) > acceptedTol)
+    oldPosition = encPosition;
+   /* if (abs(encPosition-oldPosition) > acceptedTol)
     {
       oldPosition = encPosition;
-    }
+    }*/
   }
   if (*buttonCalibration == true)
   {
@@ -296,9 +295,8 @@ void  axialMotor::runIt(bool* slowItTOP, bool* slowItBOT,uint16_t requiredPositi
     *slowItBOT = false;
   }
   //Serial.println("runIt checks for position reach once calibration is done");
-  if (calibrationCase == -1)
+  if (calibrationCase == -1 && ( *slowItBOT == false || *slowItTOP == false) )
   {
-    //Serial.println("calibration is done so runIt calls goToPosition");
     goToPosition(requiredPosition);
   }
    
@@ -363,8 +361,6 @@ int axialMotor::positionToClicks(uint16_t requiredPosition)
 {
 
   float percent = (float)requiredPosition/totalIncrementOfSlider; 
-  //Serial.println(percent);
-  //Serial.println(homePosition + (percent * totalClicksOnRobot));
   return homePosition + (percent * totalClicksOnRobot) ;
 }
 
@@ -386,11 +382,9 @@ int  axialMotor::getCalibrationCase()
 
 uint16_t axialMotor::getPosition(int calibrationCase)
 {
-  //Serial.println("calibrationCase :");
-  //Serial.println(calibrationCase);
  if (calibrationCase == 0 || calibrationCase == 1 || calibrationCase == -2)
  {
-    return 2;
+    return 1;
  }
  
  else
@@ -400,7 +394,7 @@ uint16_t axialMotor::getPosition(int calibrationCase)
    
    if (sentPosition < 0.0)
    {
-      return 3;
+      return 2;
    }
     
    return sentPosition;

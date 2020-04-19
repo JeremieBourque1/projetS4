@@ -64,7 +64,7 @@ void trigShouldSlowDownPin1();
 void trigShouldSlowDownPin2();
 
 //axialMotor axialMotor(53,-1,A1,A2,19,20,2,3);
-axialMotor test; //classe test
+axialMotor verticalMotor; //classe verticalMotor
 
 // Arduino functions
 void setup() {
@@ -75,19 +75,19 @@ void setup() {
 //  mot3.init();
   //dataPack outgoingMessage{(byte)'s',(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
   //sendMessage(outgoingMessage);
-  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
-  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
-  pinMode(test.getMotorPin(1),OUTPUT);
-  pinMode(test.getMotorPin(2),OUTPUT);
-  pinMode(test.getDrivePin(),OUTPUT);
+  pinMode(verticalMotor.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  pinMode(verticalMotor.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  attachInterrupt(digitalPinToInterrupt(verticalMotor.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(verticalMotor.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
+  pinMode(verticalMotor.getMotorPin(1),OUTPUT);
+  pinMode(verticalMotor.getMotorPin(2),OUTPUT);
+  pinMode(verticalMotor.getDrivePin(),OUTPUT);
 
   pinMode(38,OUTPUT); //power for one of the sensor
   digitalWrite(38,HIGH); //power for one of the sensor
-  test.setEnableDrive(true);
-  test.modifyCalibrationCase(NO_CALIBRATION); //START_CALIBRATION NO_CALIBRATION
-  test.setMotorState(-1);
+  verticalMotor.setEnableDrive(true);
+  verticalMotor.modifyCalibrationCase(NO_CALIBRATION); //START_CALIBRATION NO_CALIBRATION
+  verticalMotor.setMotorState(-1);
 }
 bool buttonCalibration = false;
 int requiredPosition = 1250; //from 0 (TOP) to 4095 (BOT)
@@ -96,11 +96,11 @@ bool slowItBOT = false;
 uint16_t goalPositionVerticalAxis = 0;
 
 void loop() {
-  //test.runIt(&slowItTOP,&slowItBOT,requiredPosition,&buttonCalibration);
+  //verticalMotor.runIt(&slowItTOP,&slowItBOT,requiredPosition,&buttonCalibration);
   //Serial.print("RETOUR DE GETPOSITION: ");
-  //Serial.println(test.getPosition(test.getCalibrationCase()));
-  //test.getPosition(encPosition,test.getCalibrationCase());
-  test.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);//data.buttonCalibration
+  //Serial.println(verticalMotor.getPosition(verticalMotor.getCalibrationCase()));
+  //verticalMotor.getPosition(encPosition,verticalMotor.getCalibrationCase());
+  verticalMotor.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);//data.buttonCalibration
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     
@@ -150,7 +150,7 @@ void loop() {
       dataPack outgoingMessage{1,
                                2,
                                3,
-                               test.getPosition(test.getCalibrationCase()), //test.getPosition(test.getCalibrationCase())
+                               verticalMotor.getPosition(verticalMotor.getCalibrationCase()), //verticalMotor.getPosition(verticalMotor.getCalibrationCase())
                                5,
                                6,
                                (bool) data.shouldStop , //data.shouldStop
@@ -260,23 +260,29 @@ void startMotors()
 
 void trigShouldSlowDownPin1()
 {
-  //Serial.println("TOP MAX");
     slowItTOP = true;
-    if(test.shouldSlowDown(slowItTOP,slowItBOT) == true && test.getCalibrationCase() != 0)
+    
+    if(verticalMotor.shouldSlowDown(slowItTOP,slowItBOT) == true && verticalMotor.getCalibrationCase() == -1)
     {
-      //Serial.println("STOP MOTOR");
-      test.setMotorState(-1);
+      verticalMotor.setMotorState(-1);
+      goalPositionVerticalAxis = verticalMotor.getPosition(verticalMotor.getCalibrationCase());
+    }
+
+    if (verticalMotor.shouldSlowDown(slowItTOP,slowItBOT) == true && (verticalMotor.getCalibrationCase() == 0 || verticalMotor.getCalibrationCase() == 1))
+    {
+      verticalMotor.setMotorState(-1);
     }
 }
-
+/** \brief checks if maximal bottom position is busted
+*/
 void trigShouldSlowDownPin2()
 {
-  //Serial.println("BOTTOM MAX");
+  
   slowItBOT = true;
-
-  if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
+  if(verticalMotor.shouldSlowDown(slowItTOP,slowItBOT) == true)
   {
-    //Serial.println("STOP MOTOR");
-    test.setMotorState(-1);
+    verticalMotor.setMotorState(-1);
+    goalPositionVerticalAxis = verticalMotor.getPosition( verticalMotor.getCalibrationCase());
   }
+  
 }
