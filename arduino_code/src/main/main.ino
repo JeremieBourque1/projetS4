@@ -64,7 +64,7 @@ void trigShouldSlowDownPin1();
 void trigShouldSlowDownPin2();
 
 //axialMotor axialMotor(53,-1,A1,A2,19,20,2,3);
-axialMotor verticalMotor; //classe verticalMotor
+axialMotor test; //classe test
 
 // Arduino functions
 void setup() {
@@ -75,34 +75,32 @@ void setup() {
 //  mot3.init();
   //dataPack outgoingMessage{(byte)'s',(int32_t)(mot1.getPosition()), (int32_t)(mot2.getPosition()), (int32_t)(mot3.getPosition()), 0, 0, 0, (byte)'\0'};
   //sendMessage(outgoingMessage);
-  pinMode(verticalMotor.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  pinMode(verticalMotor.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
-  attachInterrupt(digitalPinToInterrupt(verticalMotor.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
-  attachInterrupt(digitalPinToInterrupt(verticalMotor.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
-  pinMode(verticalMotor.getMotorPin(1),OUTPUT);
-  pinMode(verticalMotor.getMotorPin(2),OUTPUT);
-  pinMode(verticalMotor.getDrivePin(),OUTPUT);
+  pinMode(test.getProximitySensorPin(1), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  pinMode(test.getProximitySensorPin(2), INPUT_PULLUP); //Set input as a pull-up for proximity sensor
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(1)), trigShouldSlowDownPin1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(test.getProximitySensorPin(2)), trigShouldSlowDownPin2, FALLING);
+  pinMode(test.getMotorPin(1),OUTPUT);
+  pinMode(test.getMotorPin(2),OUTPUT);
+  pinMode(test.getDrivePin(),OUTPUT);
 
-  pinMode(38,OUTPUT); //power for one of the proximity sensor
-  digitalWrite(38,HIGH); //power for one of the proximity sensor
-  verticalMotor.setEnableDrive(true); //initialises the drive pin.
-  verticalMotor.modifyCalibrationCase(NO_CALIBRATION); //START_CALIBRATION NO_CALIBRATION
-  verticalMotor.setMotorState(-1); //starts the motor blocked
+  pinMode(38,OUTPUT); //power for one of the sensor
+  digitalWrite(38,HIGH); //power for one of the sensor
+  test.setEnableDrive(true);
+  test.modifyCalibrationCase(NO_CALIBRATION); //START_CALIBRATION NO_CALIBRATION
+  test.setMotorState(-1);
 }
 bool buttonCalibration = false;
-bool slowItTOP = false; //slowItTop is  the top limit trigger. Starts untoggled
-bool slowItBOT = false; //slowItTop is  the bottom limit trigger. Starts untoggled
-uint16_t goalPositionVerticalAxis = 0; //this is the initial position of the vertical axis
+int requiredPosition = 1250; //from 0 (TOP) to 4095 (BOT)
+bool slowItTOP = false;
+bool slowItBOT = false;
+uint16_t goalPositionVerticalAxis = 0;
 
 void loop() {
-  //This code is for testing without UI
-  //verticalMotor.runIt(&slowItTOP,&slowItBOT,requiredPosition,&buttonCalibration);
+  //test.runIt(&slowItTOP,&slowItBOT,requiredPosition,&buttonCalibration);
   //Serial.print("RETOUR DE GETPOSITION: ");
-  //Serial.println(verticalMotor.getPosition(verticalMotor.getCalibrationCase()));
-  //verticalMotor.getPosition(encPosition,verticalMotor.getCalibrationCase());
-  
-  verticalMotor.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);
-
+  //Serial.println(test.getPosition(test.getCalibrationCase()));
+  //test.getPosition(encPosition,test.getCalibrationCase());
+  test.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);//data.buttonCalibration
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
     
@@ -152,13 +150,13 @@ void loop() {
       dataPack outgoingMessage{1,
                                2,
                                3,
-                               verticalMotor.getPosition(verticalMotor.getCalibrationCase()),
+                               test.getPosition(test.getCalibrationCase()), //test.getPosition(test.getCalibrationCase())
                                5,
                                6,
-                               (bool) data.shouldStop ,
-                               (bool) data.drawer1, 
-                               (bool) data.drawer2, 
-                               (bool) data.drawer3, 
+                               (bool) data.shouldStop , //data.shouldStop
+                               (bool) data.drawer1, //data.drawer1
+                               (bool) data.drawer2, //data.drawer2
+                               (bool) data.drawer3, //data.drawer3
                                (char)data.mode,
                                (char)'\0'};
       sendMessage(outgoingMessage);
@@ -260,25 +258,25 @@ void startMotors()
 //  mot3.torque(true);
 }
 
-/** \brief checks if maximal top position is busted
-*/
 void trigShouldSlowDownPin1()
 {
+  //Serial.println("TOP MAX");
     slowItTOP = true;
-    if(verticalMotor.shouldSlowDown(slowItTOP,slowItBOT) == true && verticalMotor.getCalibrationCase() != 0)
+    if(test.shouldSlowDown(slowItTOP,slowItBOT) == true && test.getCalibrationCase() != 0)
     {
-      verticalMotor.setMotorState(-1);
+      //Serial.println("STOP MOTOR");
+      test.setMotorState(-1);
     }
 }
 
-/** \brief checks if maximal bottom position is busted
-*/
 void trigShouldSlowDownPin2()
 {
+  //Serial.println("BOTTOM MAX");
   slowItBOT = true;
 
-  if(verticalMotor.shouldSlowDown(slowItTOP,slowItBOT) == true)
+  if(test.shouldSlowDown(slowItTOP,slowItBOT) == true)
   {
-    verticalMotor.setMotorState(-1);
+    //Serial.println("STOP MOTOR");
+    test.setMotorState(-1);
   }
 }
