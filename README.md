@@ -19,17 +19,17 @@ Another part of code was made for the vertical axis motor. This code can be foun
 *NOTE*: follow the instructions section before launching the application.
 
 ### Motor control
-![Image of the motor control tab](https://github.com/JeremieBourque1/projetS4/blob/master/images/ui_motorControl.jpg)
+![Image of the motor control tab](https://github.com/JeremieBourque1/projetS4/blob/master/images/ui_motorControl.jpg)<br/>
 To start the connection, select the appropriate communication port in the drop-down menu. Once connected, moving the sliders will move the motors.
 
 ### Sequences
-![Image of the sequences tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_seq.jpg)
-Here, you can see the list of user-created sequences. To execute a sequence, double click the sequence.
-![Image of the new sequence window](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_newSeq.jpg)
+![Image of the sequences tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_seq.jpg)<br/>
+Here, you can see the list of user-created sequences. To execute a sequence, double click the sequence.<br/><br/>
+![Image of the new sequence window](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_newSeq.jpg)<br/>
 To create a new sequence, click the "Create new sequence" button, which will open this window. You can move the sliders to the desired position, then click "Save move" and create the next move. Double clicking a saved move will move the arm to that position. When done, click "ok".
 
 ### Drawers
-![Image of the drawers tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_drawers.jpg
+![Image of the drawers tab](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/ui_drawers.jpg)<br/>
 This tab makes it possible to open and close the drawers. Note that this feature is not yet implemented in the controller, so the buttons currently do nothing. The feature will be implemented in a future version.
 
 ## Hardware Requirements
