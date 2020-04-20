@@ -90,7 +90,7 @@ void setup() {
   verticalMotor.setMotorState(-1);
 }
 bool buttonCalibration = false;
-int requiredPosition = 1250; //from 0 (TOP) to 4095 (BOT)
+//int requiredPosition = 1250; //from 0 (TOP) to 4095 (BOT)
 bool slowItTOP = false;
 bool slowItBOT = false;
 uint16_t goalPositionVerticalAxis = 0;
@@ -100,6 +100,7 @@ void loop() {
   //Serial.print("RETOUR DE GETPOSITION: ");
   //Serial.println(verticalMotor.getPosition(verticalMotor.getCalibrationCase()));
   //verticalMotor.getPosition(encPosition,verticalMotor.getCalibrationCase());
+  
   verticalMotor.runIt(&slowItTOP,&slowItBOT,goalPositionVerticalAxis,&buttonCalibration);//data.buttonCalibration
   if (Serial.available() >= MESSAGE_SIZE) // Only parse message when the full message has been received.
   {
@@ -258,6 +259,8 @@ void startMotors()
 //  mot3.torque(true);
 }
 
+/** \brief checks if maximal top position is in overtravel.
+*/
 void trigShouldSlowDownPin1()
 {
     slowItTOP = true;
@@ -273,7 +276,8 @@ void trigShouldSlowDownPin1()
       verticalMotor.setMotorState(-1);
     }
 }
-/** \brief checks if maximal bottom position is busted
+
+/** \brief checks if maximal bottom position is in overtravel.
 */
 void trigShouldSlowDownPin2()
 {

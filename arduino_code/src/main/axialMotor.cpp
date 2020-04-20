@@ -98,6 +98,7 @@ bool axialMotor::shouldSlowDown(bool slowItTOP,bool slowItBOT)
       return false;
     }
   }
+  return false;
 }
 
 /** \brief Calibrate the assembly's vertical axis using the top proximity sensor.
@@ -274,12 +275,10 @@ void  axialMotor::runIt(bool* slowItTOP, bool* slowItBOT,uint16_t requiredPositi
   }
   if (calibrationCase == 0)
   {
-    //Serial.println("Calibration case = 0");
     calibrationCase = runAxialCalibration(calibrationCase);
   }
   if (calibrationCase == 1 && *slowItTOP == true)
   {
-    //Serial.println("Calibration case = 1");
     calibrationCase = runAxialCalibration(calibrationCase);
   }
 
@@ -326,10 +325,10 @@ int axialMotor::getDrivePin()
 bool axialMotor::goToPosition(uint16_t requiredPosition)
 { 
   int positionInClicks = positionToClicks(requiredPosition);
-  int tolerance = abs(positionInClicks - oldPosition);
-  //Serial.print("Tolérance: ");
-  //Serial.println(tolerance);
-  if (tolerance > acceptedTol) //if tolerance not reached
+  int differenceInPosition = abs(positionInClicks - oldPosition);
+  //Serial.print("différence entre la position actuelle et la position voulue: ");
+  //Serial.println(differenceInPosition);
+  if (differenceInPosition > acceptedTol) //if tolerance not reached
   {
     if (positionInClicks - oldPosition  < 0)
     { 
@@ -344,12 +343,20 @@ bool axialMotor::goToPosition(uint16_t requiredPosition)
       setMotorState(0);
       return true;
     }
+    else
+    {
+      return false;
+    }
   }
- else if (tolerance <= acceptedTol)
+ else if (differenceInPosition <= acceptedTol)
  {
   //Serial.println("Second out, tolerance is respected");
     setMotorState(-1);
     return true;
+ }
+ else
+ {
+  return false;
  }
 }
 
@@ -380,6 +387,10 @@ int  axialMotor::getCalibrationCase()
   return calibrationCase;
 }
 
+/** \brief Gives the position slider unit with the encoder position. Will only execute if calibration case is right.
+ *  \param calibrationCase : int value corresponding to the case of calibration. It needs to be calibrated in order for it to run.
+ *  \return uint16_t : Value in slider units of the encoder position.
+ */
 uint16_t axialMotor::getPosition(int calibrationCase)
 {
  if (calibrationCase == 0 || calibrationCase == 1 || calibrationCase == -2)
