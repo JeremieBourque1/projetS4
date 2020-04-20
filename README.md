@@ -75,7 +75,7 @@ Everything concerning the arm shell can be found [here](https://github.com/Jerem
 * DC driver L298N documentation can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/electronic/DC%20motor%20drive/L298N%20Motor%20Driver.pdf)
 * Twidec NJK-5002J Inductive limit switch documentation can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/electronic/Limit%20switch/Twidec%20NJK-5002C%20SpecSheet.pdf)
 * Cytron 12v DC motor documentation can be viewed [here](https://github.com/JeremieBourque1/projetS4/tree/master/electronic/Cytron%20DC%20motor)
-For wiring images using arduino mega2560 : ![Image of the wiring](https://github.com/JeremieBourque1/projetS4/blob/master/images/arduino%20montage.png)
+For wiring images using arduino mega2560 : ![Image of the wiring](https://raw.githubusercontent.com/JeremieBourque1/projetS4/master/images/arduino%20montage.png)
 
 ## Unit tests
 The application is tested using the unittest python module. To run the tests, open a command prompt, change the directory to the project’s directory and run this command: `python -m unittest discover`
