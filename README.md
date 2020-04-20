@@ -13,7 +13,7 @@ Due to the team's limitation in regards to access to the robotic arm, a smaller 
 
 The application is written in Python and is designed to run on Windows but should also run on other platforms, although this was not tested extensively.
 The application contains three tabs: "Motor control", which is for moving the arm's motors individually in joint mode, "Sequences", which is for creating move sequences and executing them, and "Drawers", which is for opening and closing drawers.
-Another part of code was made for the vertical axis motor. This code can be found under the Vertical_Axis branch of the GitHub.
+It is to be noted that the code controlling the arm is split into two parts.The first is in the main and runs the openCR code for all of the arm's movements. The second is in the Vertical_Axis branch and runs the arduino code which moves the vertical motor.
 
 
 *NOTE*: follow the instructions section before launching the application.
