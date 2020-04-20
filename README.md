@@ -65,7 +65,10 @@ All software documentation can be viewed [here](https://jeremiebourque1.github.i
 
 ## Hardware documentation
 ### Robotic arm prototype
-The bill of materials for the robot arm prototype can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/BOM_proto.xlsx?raw=true)
+* The bill of materials for the robot arm prototype can be viewed [here](https://github.com/JeremieBourque1/projetS4/blob/master/BOM_proto.xlsx?raw=true)
+* Electrical diagram of the prototype
+![Image of the electrical diagram](https://github.com/JeremieBourque1/projetS4/blob/master/images/electrical_diagram.png)<br/>
+ 
 ### Robotic arm shell
 Everything concerning the arm shell can be found [here](https://github.com/JeremieBourque1/projetS4/tree/master/Arm%20Shell)
 ### Vertical axis
