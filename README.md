@@ -30,10 +30,13 @@ To create a new sequence, click the "Create new sequence" button, which will ope
 This tab makes it possible to open and close the drawers. Note that this feature is not yet implemented in the controller, so the buttons currently do nothing. The feature will be implemented in a future version.
 
 ## Hardware Requirements
+* 1x PC running Windows (may also run on other platforms, but hasn't been tested)
+* 1x OpenCR board
+* 3x Dynamixel motors
+* 2x Twidec NJK-5002J inductive proximity sensor
+* 1x L298N DC motor drive
+* 1x Cytron 12v DC motor
 * Robot arm prototype (see hardware documentation for more information)
-* PC running Windows (may also run on other platforms, but hasn't been tested)
-* OpenCR board
-* TODO: VERTICAL AXIS REQUIREMENTS
 
 ## Software requirements
 
@@ -47,7 +50,7 @@ The necessary Python libraries can be installed with `pip install -r requirement
 
 ### Controller dependencies
 * Arduino IDE (https://www.arduino.cc/en/main/software)
-* OpenCR diver (should install automatically when the board is plugged into the PC
+* OpenCR driver (should install automatically when the board is plugged into the PC)
 * OpenCR board support for Arduino IDE (http://emanual.robotis.com/docs/en/parts/controller/opencr10/#install-on-windows)
 
 ## Instructions
@@ -66,7 +69,11 @@ The bill of materials for the robot arm prototype can be viewed [here](https://g
 ### Robotic arm shell
 Everything concerning the arm shell can be found [here](https://github.com/JeremieBourque1/projetS4/tree/master/Arm%20Shell)
 ### Vertical axis
-TODO
+* DC driver L298N documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/DC motor drive)
+* Twidec NJK-5002J Inductive limit switch documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Limit switch)
+* Cytron 12v DC motor documentation can be viewed [here](https://jeremiebourque1.github.io/projetS4/electronic/Cytron DC motor)
+* OpenCR documentation can be viewed [here] (https://jeremiebourque1.github.io/projetS4/electronic/OpenCR)
+For wiring images using arduino mega2560 : ![Image of the wiring](https://jeremiebourque1.github.com/images/arduino montage)
 
 ## Unit tests
 The application is tested using the unittest python module. To run the tests, open a command prompt, change the directory to the project’s directory and run this command: `python -m unittest discover`
